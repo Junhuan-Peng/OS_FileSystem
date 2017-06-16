@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26430.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OS课程设计_彭浚桓_1151250213", "OS课程设计_彭浚桓_1151250213\OS课程设计_彭浚桓_1151250213.vcxproj", "{AEF88296-54AE-41A9-808A-AA1158459958}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AEF88296-54AE-41A9-808A-AA1158459958}.Debug|x64.ActiveCfg = Debug|x64
+		{AEF88296-54AE-41A9-808A-AA1158459958}.Debug|x64.Build.0 = Debug|x64
+		{AEF88296-54AE-41A9-808A-AA1158459958}.Debug|x86.ActiveCfg = Debug|Win32
+		{AEF88296-54AE-41A9-808A-AA1158459958}.Debug|x86.Build.0 = Debug|Win32
+		{AEF88296-54AE-41A9-808A-AA1158459958}.Release|x64.ActiveCfg = Release|x64
+		{AEF88296-54AE-41A9-808A-AA1158459958}.Release|x64.Build.0 = Release|x64
+		{AEF88296-54AE-41A9-808A-AA1158459958}.Release|x86.ActiveCfg = Release|Win32
+		{AEF88296-54AE-41A9-808A-AA1158459958}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
