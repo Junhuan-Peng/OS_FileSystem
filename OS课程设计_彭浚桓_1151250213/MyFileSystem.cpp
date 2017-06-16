@@ -35,7 +35,7 @@ int main(int args, char* argv[]){
 }
 
 bool Cmd::parse(string cmd){
-	string* strings = split(cmd, ' ');
+	string* strings = split(cmd);
 	if (strings[0]._Equal("Format")){
 		Format();
 	} else if (strings[0]._Equal("MKfile")){
@@ -65,6 +65,8 @@ bool Cmd::parse(string cmd){
 }
 
 bool Cmd::Format(){
+	cout << "正在初始化硬盘……请等待" << endl;
+	
 	return true;
 }
 

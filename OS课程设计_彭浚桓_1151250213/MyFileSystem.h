@@ -105,7 +105,7 @@ public:
 	~Cmd();
 	bool parse(string cmd);
 	static Cmd* getInstance();
-	string* split(string s, char c);
+	static string* split(string s, char c);
 private:
 	Cmd();
 	static Cmd *instance;
@@ -119,8 +119,8 @@ private:
 	bool Copy(string orign_path,string goal_path);//复制文件到某一路径
 	bool Open(string cmd);//打开并编辑文件
 	bool Attrib(string file_path,string operation);//更改文件属性（是否为只读、是否被隐藏）
-	bool ViewINodeMap();
-	bool ViewBlockMap();
+	bool ViewINodeMap();//显示当前i-node位示图状况
+	bool ViewBlockMap();//显示当前block位示图状况
 
 };
 
@@ -138,10 +138,12 @@ inline Cmd* Cmd::getInstance(){
 	return instance;
 }
 
-inline string* Cmd::split(string s, char c){
+//完成命令的分割——默认以空格作为分隔符
+inline string* Cmd::split(string s, char c=' '){
 	string* strings = new string[3];
 	string temps(s);
-	for (int i = 0,j=0;;j++)
+	// ReSharper disable once CppInitializedValueIsAlwaysRewritten
+	for (auto i = 0,j=0;;j++)
 	{
 		if ((i = temps.find_first_of(c))!=string::npos){
 			strings[j] = string(temps, 0, i);
