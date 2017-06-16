@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <time.h>
 
 struct TxtBlock;
 using namespace std;
@@ -84,6 +85,22 @@ struct I_NODE
 	unsigned char minutes;// 建立文件系统时间的分钟
 	int directAddress[2];// 直接盘块地址——指向一个数据块
 	int firstClassIndexAddress;// 一级索引地址——指向一个索引块
+
+	I_NODE()
+	{
+		isReadOnly = '0';
+		isHide = '0';
+
+		time_t t = time(nullptr);
+		char temp[1];
+		strftime(temp, sizeof(temp), "%H", localtime(&t));
+		hour = *temp;
+		strftime(temp, sizeof(temp), "%M", localtime(&t));
+		minutes = *temp;
+		directAddress[0] = -1;
+		directAddress[1] = -1;
+		firstClassIndexAddress = -1;
+	}
 };
 
 //磁盘
@@ -92,7 +109,7 @@ struct Disc
 	RootDirectory *rootDirectory;
 	I_NodeBitmap *i_nodeBitMap;//描述512个i-node的状态
 	BlockBitmap *blockBitMap;//描述1024块磁盘块的状态
-	I_NODE *i_node;//512个i-node占用磁盘128块
+	I_NODE *i_node_s;//512个i-node占用磁盘128块
 	DataBlock *dataBlock;
 
 	void init()
@@ -100,7 +117,8 @@ struct Disc
 		rootDirectory = new RootDirectory;
 		i_nodeBitMap = new I_NodeBitmap;
 		blockBitMap = new BlockBitmap;
-		i_node = new I_NODE[512];
+		
+		i_node_s = new I_NODE[512];
 		dataBlock = new DataBlock[1024];
 	}
 };
