@@ -8,114 +8,159 @@
 void usage();
 Cmd* Cmd::instance = nullptr;
 
-int main(int args, char* argv[]){
-
+int main(int args, char* argv[])
+{
 	Disc disc;
 
 
 	cout << "输入 help 获取帮助" << ",输入 Exit 退出" << endl;
 	string input_cmd;
-	Cmd* cmd = Cmd::getInstance();
-	while (true){
+	Cmd* cmd = Cmd::getInstance(&disc);
+	while (true)
+	{
 		cout << ">>";
 		getline(cin, input_cmd);
 		if (input_cmd._Equal("Exit") || input_cmd._Equal("exit"))
 			break;
-		if (input_cmd._Equal("help")){
+		if (input_cmd._Equal("help"))
+		{
 			usage();
 			continue;
 		}
 
 		auto flag = cmd->parse(input_cmd);
-		if (!flag){
+		if (!flag)
+		{
 			cout << "Error" << endl;
 		}
 	}
 	return 0;
 }
 
-bool Cmd::parse(string cmd){
+bool Cmd::parse(string cmd)
+{
 	string* strings = split(cmd);
-	if (strings[0]._Equal("Format")){
+	if (strings[0]._Equal("Format"))
+	{
 		Format();
-	} else if (strings[0]._Equal("MKfile")){
+	}
+	else if (strings[0]._Equal("MKfile"))
+	{
 		MkFile(strings[1]);
-	} else if (strings[0]._Equal("MKdir")){
+	}
+	else if (strings[0]._Equal("MKdir"))
+	{
 		MkDir(strings[1]);
-	} else if (strings[0]._Equal("Cd")){
+	}
+	else if (strings[0]._Equal("Cd"))
+	{
 		Cd(strings[1]);
-	} else if (strings[0]._Equal("Delfile")){
+	}
+	else if (strings[0]._Equal("Delfile"))
+	{
 		DelFile(strings[1]);
-	} else if (strings[0]._Equal("Dir")){
+	}
+	else if (strings[0]._Equal("Dir"))
+	{
 		Dir();
-	} else if (strings[0]._Equal("Copy")){
-		Copy(strings[1],strings[2]);
-	} else if (strings[0]._Equal("Open")){
+	}
+	else if (strings[0]._Equal("Copy"))
+	{
+		Copy(strings[1], strings[2]);
+	}
+	else if (strings[0]._Equal("Open"))
+	{
 		Open(strings[1]);
-	} else if (strings[0]._Equal("Attrib")){
-		Attrib(strings[1],strings[2]);
-	} else if (strings[0]._Equal("Viewinodemap")){
+	}
+	else if (strings[0]._Equal("Attrib"))
+	{
+		Attrib(strings[1], strings[2]);
+	}
+	else if (strings[0]._Equal("Viewinodemap"))
+	{
 		ViewINodeMap();
-	} else if (strings[0]._Equal("Viewblockmap")){
+	}
+	else if (strings[0]._Equal("Viewblockmap"))
+	{
 		ViewBlockMap();
-	} else{
+	}
+	else
+	{
 		cout << strings[0] << " 找不到命令！请重新输入" << endl;
 	}
 	return true;
 }
 
-bool Cmd::Format(){
+bool Cmd::Format()
+{
 	cout << "正在初始化硬盘……请等待" << endl;
-	
+	disc->init();
+	if (disc->dataBlock != nullptr)
+	{
+		cout << "初始化成功……" << endl;
+		return true;
+	}
+	return false;
+}
+
+bool Cmd::MkFile(string cmd)
+{
 	return true;
 }
 
-bool Cmd::MkFile(string cmd){
+bool Cmd::MkDir(string cmd)
+{
 	return true;
 }
 
-bool Cmd::MkDir(string cmd){
+bool Cmd::Cd(string cmd)
+{
 	return true;
 }
 
-bool Cmd::Cd(string cmd){
+bool Cmd::DelFile(string cmd)
+{
 	return true;
 }
 
-bool Cmd::DelFile(string cmd){
+bool Cmd::DelDir(string cmd)
+{
 	return true;
 }
 
-bool Cmd::DelDir(string cmd){
+bool Cmd::Dir()
+{
 	return true;
 }
 
-bool Cmd::Dir(){
+bool Cmd::Copy(string orign_path, string goal_path)
+{
 	return true;
 }
 
-bool Cmd::Copy(string orign_path, string goal_path){
+bool Cmd::Open(string cmd)
+{
 	return true;
 }
 
-bool Cmd::Open(string cmd){
+bool Cmd::Attrib(string file_path, string operation)
+{
 	return true;
 }
 
-bool Cmd::Attrib(string file_path, string operation){
+bool Cmd::ViewINodeMap()
+{
 	return true;
 }
 
-bool Cmd::ViewINodeMap(){
+bool Cmd::ViewBlockMap()
+{
 	return true;
 }
 
-bool Cmd::ViewBlockMap(){
-	return true;
-}
 
-
-void usage(){
+void usage()
+{
 	cout << "Format\t\t\t初始化磁盘，划定结构" << endl <<
 		"Mkfile\t\t\t创建文件" << endl <<
 		"Mkdir\t\t\t创建目录" << endl <<

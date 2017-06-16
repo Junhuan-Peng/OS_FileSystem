@@ -65,13 +65,13 @@ struct RootDirectory
 //i-nodeÎ»Í¼
 struct I_NodeBitmap
 {
-	bool i_node[I_NODE_BITMAP_SIZE * 8];
+	bool i_node[512]{false};
 };
 
 //Êý¾Ý¿éÎ»Í¼¡ª¡ªÃèÊö´ÅÅÌµÄ×´Ì¬
 struct BlockBitmap
 {
-	bool BlocksStates[512 * BLOCK_SIZE];
+	bool BlocksStates[512 * 2]{false};
 };
 
 //i-node ³¤¶ÈÎª16×Ö½Ú£¨1+1+1+1+2*4+4£©
@@ -89,11 +89,20 @@ struct I_NODE
 //´ÅÅÌ
 struct Disc
 {
-	RootDirectory rootDirectory;
-	I_NodeBitmap i_nodeBitMap;
-	BlockBitmap blockBitMap[2];//ÃèÊö1024¿é´ÅÅÌ¿éµÄ×´Ì¬
-	I_NODE i_node[512];//512¸öi-nodeÕ¼ÓÃ´ÅÅÌ128¿é
-	DataBlock dataBlock[1024];
+	RootDirectory *rootDirectory;
+	I_NodeBitmap *i_nodeBitMap;//ÃèÊö512¸öi-nodeµÄ×´Ì¬
+	BlockBitmap *blockBitMap;//ÃèÊö1024¿é´ÅÅÌ¿éµÄ×´Ì¬
+	I_NODE *i_node;//512¸öi-nodeÕ¼ÓÃ´ÅÅÌ128¿é
+	DataBlock *dataBlock;
+
+	void init()
+	{
+		rootDirectory = new RootDirectory;
+		i_nodeBitMap = new I_NodeBitmap;
+		blockBitMap = new BlockBitmap;
+		i_node = new I_NODE[512];
+		dataBlock = new DataBlock[1024];
+	}
 };
 
 
@@ -101,12 +110,14 @@ struct Disc
 
 class Cmd{
 public:
-	
+
+	Cmd(Disc* disc);
 	~Cmd();
 	bool parse(string cmd);
-	static Cmd* getInstance();
+	static Cmd* getInstance(Disc* disc);
 	static string* split(string s, char c);
 private:
+	Disc *disc;
 	Cmd();
 	static Cmd *instance;
 	bool Format();//³õÊ¼»¯´ÅÅÌ£¬»®¶¨½á¹¹
@@ -124,15 +135,16 @@ private:
 
 };
 
-inline Cmd::Cmd(){
+inline Cmd::Cmd(Disc *disc){
+	this->disc = disc;
 }
 
 inline Cmd::~Cmd(){
 }
 
-inline Cmd* Cmd::getInstance(){
+inline Cmd* Cmd::getInstance(Disc *disc){
 	if (instance == nullptr){
-		instance = new Cmd();
+		instance = new Cmd(disc);
 	}
 
 	return instance;
