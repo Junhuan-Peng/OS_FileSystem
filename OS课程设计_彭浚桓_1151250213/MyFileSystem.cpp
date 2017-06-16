@@ -9,6 +9,10 @@ void usage();
 Cmd* Cmd::instance = nullptr;
 
 int main(int args, char* argv[]){
+
+	Disc disc;
+
+
 	cout << "输入 help 获取帮助" << ",输入 Exit 退出" << endl;
 	string input_cmd;
 	Cmd* cmd = Cmd::getInstance();
