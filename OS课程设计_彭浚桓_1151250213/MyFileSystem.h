@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #include <string>
 #include <time.h>
@@ -6,11 +6,11 @@
 struct TxtBlock;
 using namespace std;
 
-// TODO: ÔÚ´Ë´¦ÒıÓÃ³ÌĞòĞèÒªµÄÆäËûÍ·ÎÄ¼ş
+// TODO: åœ¨æ­¤å¤„å¼•ç”¨ç¨‹åºéœ€è¦çš„å…¶ä»–å¤´æ–‡ä»¶
 
-//Ò»Ğ©³£Á¿µÄ¶¨Òå
-const int BLOCK_SIZE = 64; //´ÅÅÌ¿éµÄ´óĞ¡¡ª¡ª64×Ö½Ú
-const int DIRECORY_ENTRY = 16;//Ä¿Â¼ÏîµÄ´óĞ¡¡ª¡ª16×Ö½Ú
+//ä¸€äº›å¸¸é‡çš„å®šä¹‰
+const int BLOCK_SIZE = 64; //ç£ç›˜å—çš„å¤§å°â€”â€”64å­—èŠ‚
+const int DIRECORY_ENTRY = 16;//ç›®å½•é¡¹çš„å¤§å°â€”â€”16å­—èŠ‚
 
 struct Disc;
 struct RootDirectory;
@@ -24,12 +24,12 @@ struct IndexBlock;
 struct TxtBlock;
 struct DirectoryFileBlock;
 
-//Ä¿Â¼Ïî
+//ç›®å½•é¡¹
 struct DirecoryEntry
 {
-	char fileName[11];//ÎÄ¼ş»òÄ¿Â¼Ãû
-	unsigned char flag;//0 ±íÊ¾Ò»°ãÎÄ¼ş£¬1 ±íÊ¾Ä¿Â¼
-	int i_node_number;//i-node ±àºÅ¡ª¡ªÖ¸ÏòÎÄ¼ş»òÕßÄ¿Â¼µÄË÷Òı½Úµã
+	char fileName[11];//æ–‡ä»¶æˆ–ç›®å½•å
+	unsigned char flag;//0 è¡¨ç¤ºä¸€èˆ¬æ–‡ä»¶ï¼Œ1 è¡¨ç¤ºç›®å½•
+	int i_node_number;//i-node ç¼–å·â€”â€”æŒ‡å‘æ–‡ä»¶æˆ–è€…ç›®å½•çš„ç´¢å¼•èŠ‚ç‚¹
 	DirecoryEntry(){
 		fileName[0] = '\0';
 		flag = -1;
@@ -46,19 +46,19 @@ struct DirecoryEntry
 
 };
 
-//Ë÷ÒıÊı¾İ¿é
+//ç´¢å¼•æ•°æ®å—
 struct IndexBlock
 {
 	int indexs[16];
 };
 
-//ÎÄ±¾ÎÄ¼şÊı¾İ¿é
+//æ–‡æœ¬æ–‡ä»¶æ•°æ®å—
 struct TxtBlock
 {
 	char txt[BLOCK_SIZE];
 };
 
-//Ä¿Â¼ÎÄ¼şÊı¾İ¿é
+//ç›®å½•æ–‡ä»¶æ•°æ®å—
 struct DirectoryFileBlock
 {
 	DirecoryEntry direcoryEntry[4];
@@ -66,9 +66,9 @@ struct DirectoryFileBlock
 
 union DataBlock
 {
-	IndexBlock indexBlock;//Ë÷Òı¿é
-	TxtBlock txtBlock;//ÎÄ±¾ÎÄ¼şÊı¾İ¿é
-	DirectoryFileBlock directoryBlock;//Ä¿Â¼ÎÄ¼şÊı¾İ¿é
+	IndexBlock indexBlock;//ç´¢å¼•å—
+	TxtBlock txtBlock;//æ–‡æœ¬æ–‡ä»¶æ•°æ®å—
+	DirectoryFileBlock directoryBlock;//ç›®å½•æ–‡ä»¶æ•°æ®å—
 	DataBlock(void)
 	{
 		
@@ -76,7 +76,7 @@ union DataBlock
 };
 
 
-//¸ùÄ¿Â¼¡ª¡ª×î¶àËÄ¸öÄ¿Â¼Ïî
+//æ ¹ç›®å½•â€”â€”æœ€å¤šå››ä¸ªç›®å½•é¡¹
 struct RootDirectory
 {
 	DirecoryEntry direcoryEntries[4];
@@ -94,41 +94,41 @@ struct RootDirectory
 	
 };
 
-//i-nodeÎ»Í¼
+//i-nodeä½å›¾
 struct I_NodeBitmap
 {
 	bool i_node_bitmap[512]{false};
-	//»ñÈ¡Ò»¸öÄÜ¹»Ê¹ÓÃµÄi-nodeµÄÏÂ±ê
+	//è·å–ä¸€ä¸ªèƒ½å¤Ÿä½¿ç”¨çš„i-nodeçš„ä¸‹æ ‡
 
 	/**
-	 * \brief »ñÈ¡Ò»¸öÄÜ¹»Ê¹ÓÃµÄi-nodeÏÂ±ê
-	 * \param i ÓÃÓÚ´æ´¢ÏÂ±êµÄÕûĞÎ
-	 * \return Èç¹û´æÔÚ->true
+	 * \brief è·å–ä¸€ä¸ªèƒ½å¤Ÿä½¿ç”¨çš„i-nodeä¸‹æ ‡
+	 * \param i ç”¨äºå­˜å‚¨ä¸‹æ ‡çš„æ•´å½¢
+	 * \return å¦‚æœå­˜åœ¨->true
 	 */
 	bool getAnINodeNum(int& i)
 	{
 		i = 0;
 		// ReSharper disable once CppPossiblyErroneousEmptyStatements
 		while (i < 1024 && i_node_bitmap[i++] != false);
-		i -= 1;//µÖÏûµô×îºóÒ»´Îi++
+		i -= 1;//æŠµæ¶ˆæ‰æœ€åä¸€æ¬¡i++
 
-		//Èç¹û´æÔÚ£¬Ôò¶ÔÓ¦Î»ÊÇfalse£¬Ôò·µ»Ø=£¡false->true
-		//Èç¹û²»´æÔÚ£¬Ôòi×îºóµÈÓÚ1023£¬Æä¶ÔÓ¦Î»Îªtrue£¬Ôò·µ»Ø=£¡true -> false
+		//å¦‚æœå­˜åœ¨ï¼Œåˆ™å¯¹åº”ä½æ˜¯falseï¼Œåˆ™è¿”å›=ï¼false->true
+		//å¦‚æœä¸å­˜åœ¨ï¼Œåˆ™iæœ€åç­‰äº1023ï¼Œå…¶å¯¹åº”ä½ä¸ºtrueï¼Œåˆ™è¿”å›=ï¼true -> false
 
 		return !i_node_bitmap[i];
 	}
 };
 
-//Êı¾İ¿éÎ»Í¼¡ª¡ªÃèÊö´ÅÅÌµÄ×´Ì¬
+//æ•°æ®å—ä½å›¾â€”â€”æè¿°ç£ç›˜çš„çŠ¶æ€
 struct BlockBitmap
 {
 	bool blocks[512 * 2]{false};
 
 	
 	/**
-	 * \brief »ñÈ¡Ò»¸öÄÜ¹»Ê¹ÓÃµÄÊı¾İ¿éµÄÏÂ±ê
+	 * \brief è·å–ä¸€ä¸ªèƒ½å¤Ÿä½¿ç”¨çš„æ•°æ®å—çš„ä¸‹æ ‡
 	 * \param i 
-	 * \return Èç¹û´æÔÚ->true
+	 * \return å¦‚æœå­˜åœ¨->true
 	 */
 	bool getABlockNum(int& i)
 	{
@@ -139,16 +139,16 @@ struct BlockBitmap
 	}
 };
 
-//i-node ³¤¶ÈÎª16×Ö½Ú£¨1+1+1+1+2*4+4£©
-//ÔÚÎÄ¼ş³¬³öÁ½¸öÅÌ¿éÊ±£¬½«Ê¹ÓÃÒ»¼¶Ë÷ÒıµØÖ·£¬¾ÍÊÇËµÎÄ¼ş×î´óÎª18¸öÅÌ¿é
+//i-node é•¿åº¦ä¸º16å­—èŠ‚ï¼ˆ1+1+1+1+2*4+4ï¼‰
+//åœ¨æ–‡ä»¶è¶…å‡ºä¸¤ä¸ªç›˜å—æ—¶ï¼Œå°†ä½¿ç”¨ä¸€çº§ç´¢å¼•åœ°å€ï¼Œå°±æ˜¯è¯´æ–‡ä»¶æœ€å¤§ä¸º18ä¸ªç›˜å—
 struct I_NODE
 {
-	unsigned char isReadOnly;// ÊÇ·ñÖ»¶Á
-	unsigned char isHide;// ÊÇ·ñÒş²Ø
-	unsigned char hour;// ½¨Á¢ÎÄ¼şÏµÍ³Ê±¼äµÄĞ¡Ê±
-	unsigned char minutes;// ½¨Á¢ÎÄ¼şÏµÍ³Ê±¼äµÄ·ÖÖÓ
-	int directAddress[2];// Ö±½ÓÅÌ¿éµØÖ·¡ª¡ªÖ¸ÏòÒ»¸öÊı¾İ¿é
-	int firstClassIndexAddress;// Ò»¼¶Ë÷ÒıµØÖ·¡ª¡ªÖ¸ÏòÒ»¸öË÷Òı¿é
+	unsigned char isReadOnly;// æ˜¯å¦åªè¯»
+	unsigned char isHide;// æ˜¯å¦éšè—
+	unsigned char hour;// å»ºç«‹æ–‡ä»¶ç³»ç»Ÿæ—¶é—´çš„å°æ—¶
+	unsigned char minutes;// å»ºç«‹æ–‡ä»¶ç³»ç»Ÿæ—¶é—´çš„åˆ†é’Ÿ
+	int directAddress[2];// ç›´æ¥ç›˜å—åœ°å€â€”â€”æŒ‡å‘ä¸€ä¸ªæ•°æ®å—
+	int firstClassIndexAddress;// ä¸€çº§ç´¢å¼•åœ°å€â€”â€”æŒ‡å‘ä¸€ä¸ªç´¢å¼•å—
 
 	I_NODE()
 	{
@@ -176,28 +176,28 @@ struct I_NODE
 		minutes = *temp;
 	}
 
-	//ÅĞ¶Ïµ±Ç°i-nodeÄÜ·ñ¼ÌĞøÌí¼Ó×Ói-node(×ÓÄ¿Â¼»òÕß×ÓÎÄ¼ş£©
+	//åˆ¤æ–­å½“å‰i-nodeèƒ½å¦ç»§ç»­æ·»åŠ å­i-node(å­ç›®å½•æˆ–è€…å­æ–‡ä»¶ï¼‰
 	bool isFull()
 	{
-		//TODO Ôö¼ÓÅĞ¶Ïi-nodeÊÇ·ñÂú
+		//TODO å¢åŠ åˆ¤æ–­i-nodeæ˜¯å¦æ»¡
 		return false;
 	}
 
 	bool addChild(int childINodeNum)
 	{
-		//TODO ÔÚÕâÀïÌí¼Ó¹ØÓÚÔö¼Ó×Ó½ÚµãµÄ´úÂë
+		//TODO åœ¨è¿™é‡Œæ·»åŠ å…³äºå¢åŠ å­èŠ‚ç‚¹çš„ä»£ç 
 		return true;
 	}
 
 };
 
-//´ÅÅÌ
+//ç£ç›˜
 struct Disc
 {
 	RootDirectory rootDirectory;
-	I_NodeBitmap i_nodeBitMap;//ÃèÊö512¸öi-nodeµÄ×´Ì¬
-	BlockBitmap blockBitMap;//ÃèÊö1024¿é´ÅÅÌ¿éµÄ×´Ì¬
-	I_NODE i_node_s[512];//512¸öi-nodeÕ¼ÓÃ´ÅÅÌ128¿é
+	I_NodeBitmap i_nodeBitMap;//æè¿°512ä¸ªi-nodeçš„çŠ¶æ€
+	BlockBitmap blockBitMap;//æè¿°1024å—ç£ç›˜å—çš„çŠ¶æ€
+	I_NODE i_node_s[512];//512ä¸ªi-nodeå ç”¨ç£ç›˜128å—
 	DataBlock dataBlock[1024];
 
 };
@@ -243,18 +243,18 @@ public:
 private:
 	Cmd();
 	static Cmd* instance;
-	bool Format();//³õÊ¼»¯´ÅÅÌ£¬»®¶¨½á¹¹
-	bool MkFile(string filepath);//´´½¨ÎÄ¼ş
-	bool MkDir(string dir);//´´½¨Ä¿Â¼
-	bool Cd(string dir);//¸Ä±äµ±Ç°Ä¿Â¼
-	bool DelFile(string filepath);//É¾³ıÎÄ¼ş£¨×¢ÒâÖ»¶ÁÊôĞÔ£©
-	bool DelDir(string dir);//É¾³ıÄ¿Â¼
-	bool Dir();//ÁĞÎÄ¼şÄ¿Â¼
-	bool Copy(string orign_path, string goal_path);//¸´ÖÆÎÄ¼şµ½Ä³Ò»Â·¾¶
-	bool Open(string filepath);//´ò¿ª²¢±à¼­ÎÄ¼ş
-	bool Attrib(string file_path, string operation);//¸ü¸ÄÎÄ¼şÊôĞÔ£¨ÊÇ·ñÎªÖ»¶Á¡¢ÊÇ·ñ±»Òş²Ø£©
-	bool ViewINodeMap();//ÏÔÊ¾µ±Ç°i-nodeÎ»Ê¾Í¼×´¿ö
-	bool ViewBlockMap();//ÏÔÊ¾µ±Ç°blockÎ»Ê¾Í¼×´¿ö
+	bool Format();//åˆå§‹åŒ–ç£ç›˜ï¼Œåˆ’å®šç»“æ„
+	bool MkFile(string filepath);//åˆ›å»ºæ–‡ä»¶
+	bool MkDir(string dir);//åˆ›å»ºç›®å½•
+	bool Cd(string dir);//æ”¹å˜å½“å‰ç›®å½•
+	bool DelFile(string filepath);//åˆ é™¤æ–‡ä»¶ï¼ˆæ³¨æ„åªè¯»å±æ€§ï¼‰
+	bool DelDir(string dir);//åˆ é™¤ç›®å½•
+	bool Dir();//åˆ—æ–‡ä»¶ç›®å½•
+	bool Copy(string orign_path, string goal_path);//å¤åˆ¶æ–‡ä»¶åˆ°æŸä¸€è·¯å¾„
+	bool Open(string filepath);//æ‰“å¼€å¹¶ç¼–è¾‘æ–‡ä»¶
+	bool Attrib(string file_path, string operation);//æ›´æ”¹æ–‡ä»¶å±æ€§ï¼ˆæ˜¯å¦ä¸ºåªè¯»ã€æ˜¯å¦è¢«éšè—ï¼‰
+	bool ViewINodeMap();//æ˜¾ç¤ºå½“å‰i-nodeä½ç¤ºå›¾çŠ¶å†µ
+	bool ViewBlockMap();//æ˜¾ç¤ºå½“å‰blockä½ç¤ºå›¾çŠ¶å†µ
 };
 
 inline Cmd::Cmd() : disc(nullptr), cwd_inode(-1){
@@ -281,7 +281,7 @@ inline Cmd* Cmd::getInstance(Disc* disc)
 	return instance;
 }
 
-//Íê³ÉÃüÁîµÄ·Ö¸î¡ª¡ªÄ¬ÈÏÒÔ¿Õ¸ñ×÷Îª·Ö¸ô·û
+//å®Œæˆå‘½ä»¤çš„åˆ†å‰²â€”â€”é»˜è®¤ä»¥ç©ºæ ¼ä½œä¸ºåˆ†éš”ç¬¦
 inline string* Cmd::split(string s, char c = ' ')
 {
 	string* strings = new string[3];
