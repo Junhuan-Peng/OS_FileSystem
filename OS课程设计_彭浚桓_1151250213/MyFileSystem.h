@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <string>
 #include <time.h>
@@ -69,9 +69,8 @@ union DataBlock
 	IndexBlock indexBlock;//索引块
 	TxtBlock txtBlock;//文本文件数据块
 	DirectoryFileBlock directoryBlock;//目录文件数据块
-	DataBlock(void)
-	{
-		
+	DataBlock(void){
+
 	}
 };
 
