@@ -10,15 +10,16 @@ Cmd* Cmd::instance = nullptr;
 
 int main(int args, char* argv[])
 {
-	Disc disc;
-
+	Disc *disc = nullptr;
+	
 
 	cout << "输入 help 获取帮助" << ",输入 Exit 退出" << endl;
 	string input_cmd;
-	Cmd* cmd = Cmd::getInstance(&disc);
+	Cmd* cmd = Cmd::getInstance(disc);
 	while (true)
 	{
-		cout << ">>";
+
+		cout <<cmd->getCwd()<<"  >>";
 		getline(cin, input_cmd);
 		if (input_cmd._Equal("Exit") || input_cmd._Equal("exit"))
 			break;
@@ -94,22 +95,61 @@ bool Cmd::parse(string cmd)
 bool Cmd::Format()
 {
 	cout << "正在初始化硬盘……请等待" << endl;
-	disc->init();
+	disc = new Disc;
 	if (disc->dataBlock != nullptr)
 	{
 		cout << "初始化成功……" << endl;
+		cwd = "Root/";
 		return true;
 	}
 	return false;
 }
 
-bool Cmd::MkFile(string cmd)
+bool Cmd::MkFile(string filepath)
 {
 	return true;
 }
 
-bool Cmd::MkDir(string cmd)
+bool Cmd::MkDir(string dir)
 {
+	int i_node_num;
+	if (cwd_inode != -1){//非根目录
+		I_NODE parentINode = disc->i_node_s[cwd_inode];
+		if (parentINode.isFull()){
+			cout << "该目录下已满，不能再添加任何目录或者文件" << endl;
+			return false;
+		}
+
+		
+		if (disc->i_nodeBitMap.getAnINodeNum(i_node_num)){//找到空i-node
+			disc->i_nodeBitMap.i_node_bitmap[i_node_num] = true;//更改对应i-node的状态
+			disc->i_node_s[i_node_num].init();//初始化i-node——主要是对时间的更改
+			parentINode.addChild(i_node_num);//完成父节点到子节点的连接
+
+		} else{
+			cout << "空间不足，无法创建目录！";
+			return false;
+		}
+	}else//根节点
+	{
+		int j;
+		if(disc->rootDirectory.getAnVoidDirecoryEntry(j))//获取可用根目录
+		{
+			if (disc->i_nodeBitMap.getAnINodeNum(i_node_num)){
+				disc->i_nodeBitMap.i_node_bitmap[i_node_num] = true;
+				disc->i_node_s[i_node_num].init();
+			}
+	
+			disc->rootDirectory.direcoryEntries[j].init(dir._Myptr(), 1, i_node_num);
+
+		}else
+		{
+			cout << "根目录已满，不能再向其添加目录" << endl;
+		}
+
+	}
+
+
 	return true;
 }
 
