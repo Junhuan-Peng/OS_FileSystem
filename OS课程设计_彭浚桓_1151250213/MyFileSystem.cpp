@@ -101,7 +101,12 @@ bool Cmd::Format()
 {
 	cout << "正在初始化硬盘……请等待" << endl;
 	disc = new Disc;
-	if (disc->dataBlock != nullptr)
+	for (int i = 0; i < 1024; i++){
+		disc->blockBitMap.blocks[i] = false;
+		if (i<512)
+			disc->i_nodeBitMap.i_node_bitmap[i % 512] = false;
+	}
+	if (disc->dataBlocks != nullptr)
 	{
 		cout << "初始化成功……" << endl;
 		cwd = "Root/";
@@ -121,7 +126,7 @@ bool Cmd::MkDir(string dir)
 	if (cwd_inode != -1)
 	{//非根目录
 		I_NODE parentINode = disc->i_node_s[cwd_inode];
-		if (parentINode.isFull())
+		if (parentINode.isFull(disc->dataBlocks))
 		{
 			cout << "该目录下已满，不能再添加任何目录或者文件" << endl;
 			return false;
@@ -132,11 +137,13 @@ bool Cmd::MkDir(string dir)
 		{//找到空i-node
 			disc->i_nodeBitMap.i_node_bitmap[i_node_num] = true;//更改对应i-node的状态
 			disc->i_node_s[i_node_num].init();//初始化i-node——主要是对时间的更改
-			parentINode.addChild(i_node_num);//完成父节点到子节点的连接
+			parentINode.addChild(i_node_num,disc->dataBlocks,disc->blockBitMap);//完成父节点到子节点的连接
 		}
 		else
 		{
 			cout << "空间不足，无法创建目录！";
+			disc->i_nodeBitMap.i_node_bitmap[i_node_num] = false;//不能创建相应的数据，i-node对应位应该置为false
+
 			return false;
 		}
 	}
