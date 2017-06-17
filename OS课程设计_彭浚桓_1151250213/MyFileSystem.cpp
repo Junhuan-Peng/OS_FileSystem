@@ -10,15 +10,15 @@ Cmd* Cmd::instance = nullptr;
 
 int main(int args, char* argv[])
 {
-	Disc disc;
+	Disc* disc = nullptr;
 
 
 	cout << "输入 help 获取帮助" << ",输入 Exit 退出" << endl;
 	string input_cmd;
-	Cmd* cmd = Cmd::getInstance(&disc);
+	Cmd* cmd = Cmd::getInstance(disc);
 	while (true)
 	{
-		cout << ">>";
+		cout << cmd->getCwd() << "  >>";
 		getline(cin, input_cmd);
 		if (input_cmd._Equal("Exit") || input_cmd._Equal("exit"))
 			break;
@@ -40,9 +40,15 @@ int main(int args, char* argv[])
 bool Cmd::parse(string cmd)
 {
 	string* strings = split(cmd);
+
 	if (strings[0]._Equal("Format"))
 	{
 		Format();
+	}
+	else if (disc == nullptr)
+	{
+		cout << "硬盘未初始化！！！请输入 help 查看命令！！" << endl;
+		return false;
 	}
 	else if (strings[0]._Equal("MKfile"))
 	{
@@ -94,22 +100,66 @@ bool Cmd::parse(string cmd)
 bool Cmd::Format()
 {
 	cout << "正在初始化硬盘……请等待" << endl;
-	disc->init();
+	disc = new Disc;
 	if (disc->dataBlock != nullptr)
 	{
 		cout << "初始化成功……" << endl;
+		cwd = "Root/";
 		return true;
 	}
 	return false;
 }
 
-bool Cmd::MkFile(string cmd)
+bool Cmd::MkFile(string filepath)
 {
 	return true;
 }
 
-bool Cmd::MkDir(string cmd)
+bool Cmd::MkDir(string dir)
 {
+	int i_node_num;
+	if (cwd_inode != -1)
+	{//非根目录
+		I_NODE parentINode = disc->i_node_s[cwd_inode];
+		if (parentINode.isFull())
+		{
+			cout << "该目录下已满，不能再添加任何目录或者文件" << endl;
+			return false;
+		}
+
+
+		if (disc->i_nodeBitMap.getAnINodeNum(i_node_num))
+		{//找到空i-node
+			disc->i_nodeBitMap.i_node_bitmap[i_node_num] = true;//更改对应i-node的状态
+			disc->i_node_s[i_node_num].init();//初始化i-node——主要是对时间的更改
+			parentINode.addChild(i_node_num);//完成父节点到子节点的连接
+		}
+		else
+		{
+			cout << "空间不足，无法创建目录！";
+			return false;
+		}
+	}
+	else//根节点
+	{
+		int j;
+		if (disc->rootDirectory.getAnVoidDirecoryEntry(j))//获取可用根目录
+		{
+			if (disc->i_nodeBitMap.getAnINodeNum(i_node_num))
+			{
+				disc->i_nodeBitMap.i_node_bitmap[i_node_num] = true;
+				disc->i_node_s[i_node_num].init();
+			}
+
+			disc->rootDirectory.direcoryEntries[j].init(dir._Myptr(), 1, i_node_num);
+		}
+		else
+		{
+			cout << "根目录已满，不能再向其添加目录" << endl;
+		}
+	}
+
+
 	return true;
 }
 
@@ -162,9 +212,9 @@ bool Cmd::ViewBlockMap()
 void usage()
 {
 	cout << "Format\t\t\t初始化磁盘，划定结构" << endl <<
-		"Mkfile\t\t\t创建文件" << endl <<
-		"Mkdir\t\t\t创建目录" << endl <<
-		"Cd\t\t\t改变当前目录" << endl <<
+		"Mkfile [file path]\t\t创建文件" << endl <<
+		"Mkdir [dir path]\t\t创建目录" << endl <<
+		"Cd [dir path]\t\t改变当前目录" << endl <<
 		"Delfile [file path]\t删除文件（注意只读属性）" << endl <<
 		"Deldir [dir path]\t删除目录（注意只读属性）" << endl <<
 		"Dir\t\t\t列文件目录 （列出名字和建立时间，注意隐藏属性）" << endl <<
