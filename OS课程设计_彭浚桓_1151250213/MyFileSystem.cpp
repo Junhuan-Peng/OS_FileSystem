@@ -1,8 +1,8 @@
-// MyFileSystem.cpp : ¶¨Òå¿ØÖÆÌ¨Ó¦ÓÃ³ÌĞòµÄÈë¿Úµã¡£
+// MyFileSystem.cpp : å®šä¹‰æ§åˆ¶å°åº”ç”¨ç¨‹åºçš„å…¥å£ç‚¹ã€‚
 //
 
 
-#include "MyFileSystem.h"//¶¨Òå»ù±¾½á¹¹
+#include "MyFileSystem.h"//å®šä¹‰åŸºæœ¬ç»“æ„
 #include <iostream>
 
 void usage();
@@ -13,7 +13,7 @@ int main(int args, char* argv[])
 	Disc* disc = nullptr;
 
 
-	cout << "ÊäÈë help »ñÈ¡°ïÖú" << ",ÊäÈë Exit ÍË³ö" << endl;
+	cout << "è¾“å…¥ help è·å–å¸®åŠ©" << ",è¾“å…¥ Exit é€€å‡º" << endl;
 	string input_cmd;
 	Cmd* cmd = Cmd::getInstance(disc);
 	while (true)
@@ -47,7 +47,7 @@ bool Cmd::parse(string cmd)
 	}
 	else if (disc == nullptr)
 	{
-		cout << "Ó²ÅÌÎ´³õÊ¼»¯£¡£¡£¡ÇëÊäÈë help ²é¿´ÃüÁî£¡£¡" << endl;
+		cout << "ç¡¬ç›˜æœªåˆå§‹åŒ–ï¼ï¼ï¼è¯·è¾“å…¥ help æŸ¥çœ‹å‘½ä»¤ï¼ï¼" << endl;
 		return false;
 	}
 	else if (strings[0]._Equal("MKfile"))
@@ -92,18 +92,18 @@ bool Cmd::parse(string cmd)
 	}
 	else
 	{
-		cout << strings[0] << " ÕÒ²»µ½ÃüÁî£¡ÇëÖØĞÂÊäÈë" << endl;
+		cout << strings[0] << " æ‰¾ä¸åˆ°å‘½ä»¤ï¼è¯·é‡æ–°è¾“å…¥" << endl;
 	}
 	return true;
 }
 
 bool Cmd::Format()
 {
-	cout << "ÕıÔÚ³õÊ¼»¯Ó²ÅÌ¡­¡­ÇëµÈ´ı" << endl;
+	cout << "æ­£åœ¨åˆå§‹åŒ–ç¡¬ç›˜â€¦â€¦è¯·ç­‰å¾…" << endl;
 	disc = new Disc;
 	if (disc->dataBlock != nullptr)
 	{
-		cout << "³õÊ¼»¯³É¹¦¡­¡­" << endl;
+		cout << "åˆå§‹åŒ–æˆåŠŸâ€¦â€¦" << endl;
 		cwd = "Root/";
 		return true;
 	}
@@ -119,31 +119,31 @@ bool Cmd::MkDir(string dir)
 {
 	int i_node_num;
 	if (cwd_inode != -1)
-	{//·Ç¸ùÄ¿Â¼
+	{//éæ ¹ç›®å½•
 		I_NODE parentINode = disc->i_node_s[cwd_inode];
 		if (parentINode.isFull())
 		{
-			cout << "¸ÃÄ¿Â¼ÏÂÒÑÂú£¬²»ÄÜÔÙÌí¼ÓÈÎºÎÄ¿Â¼»òÕßÎÄ¼ş" << endl;
+			cout << "è¯¥ç›®å½•ä¸‹å·²æ»¡ï¼Œä¸èƒ½å†æ·»åŠ ä»»ä½•ç›®å½•æˆ–è€…æ–‡ä»¶" << endl;
 			return false;
 		}
 
 
 		if (disc->i_nodeBitMap.getAnINodeNum(i_node_num))
-		{//ÕÒµ½¿Õi-node
-			disc->i_nodeBitMap.i_node_bitmap[i_node_num] = true;//¸ü¸Ä¶ÔÓ¦i-nodeµÄ×´Ì¬
-			disc->i_node_s[i_node_num].init();//³õÊ¼»¯i-node¡ª¡ªÖ÷ÒªÊÇ¶ÔÊ±¼äµÄ¸ü¸Ä
-			parentINode.addChild(i_node_num);//Íê³É¸¸½Úµãµ½×Ó½ÚµãµÄÁ¬½Ó
+		{//æ‰¾åˆ°ç©ºi-node
+			disc->i_nodeBitMap.i_node_bitmap[i_node_num] = true;//æ›´æ”¹å¯¹åº”i-nodeçš„çŠ¶æ€
+			disc->i_node_s[i_node_num].init();//åˆå§‹åŒ–i-nodeâ€”â€”ä¸»è¦æ˜¯å¯¹æ—¶é—´çš„æ›´æ”¹
+			parentINode.addChild(i_node_num);//å®Œæˆçˆ¶èŠ‚ç‚¹åˆ°å­èŠ‚ç‚¹çš„è¿æ¥
 		}
 		else
 		{
-			cout << "¿Õ¼ä²»×ã£¬ÎŞ·¨´´½¨Ä¿Â¼£¡";
+			cout << "ç©ºé—´ä¸è¶³ï¼Œæ— æ³•åˆ›å»ºç›®å½•ï¼";
 			return false;
 		}
 	}
-	else//¸ù½Úµã
+	else//æ ¹èŠ‚ç‚¹
 	{
 		int j;
-		if (disc->rootDirectory.getAnVoidDirecoryEntry(j))//»ñÈ¡¿ÉÓÃ¸ùÄ¿Â¼
+		if (disc->rootDirectory.getAnVoidDirecoryEntry(j))//è·å–å¯ç”¨æ ¹ç›®å½•
 		{
 			if (disc->i_nodeBitMap.getAnINodeNum(i_node_num))
 			{
@@ -155,7 +155,7 @@ bool Cmd::MkDir(string dir)
 		}
 		else
 		{
-			cout << "¸ùÄ¿Â¼ÒÑÂú£¬²»ÄÜÔÙÏòÆäÌí¼ÓÄ¿Â¼" << endl;
+			cout << "æ ¹ç›®å½•å·²æ»¡ï¼Œä¸èƒ½å†å‘å…¶æ·»åŠ ç›®å½•" << endl;
 		}
 	}
 
@@ -211,16 +211,16 @@ bool Cmd::ViewBlockMap()
 
 void usage()
 {
-	cout << "Format\t\t\t³õÊ¼»¯´ÅÅÌ£¬»®¶¨½á¹¹" << endl <<
-		"Mkfile [file path]\t\t´´½¨ÎÄ¼ş" << endl <<
-		"Mkdir [dir path]\t\t´´½¨Ä¿Â¼" << endl <<
-		"Cd [dir path]\t\t¸Ä±äµ±Ç°Ä¿Â¼" << endl <<
-		"Delfile [file path]\tÉ¾³ıÎÄ¼ş£¨×¢ÒâÖ»¶ÁÊôĞÔ£©" << endl <<
-		"Deldir [dir path]\tÉ¾³ıÄ¿Â¼£¨×¢ÒâÖ»¶ÁÊôĞÔ£©" << endl <<
-		"Dir\t\t\tÁĞÎÄ¼şÄ¿Â¼ £¨ÁĞ³öÃû×ÖºÍ½¨Á¢Ê±¼ä£¬×¢ÒâÒş²ØÊôĞÔ£©" << endl <<
-		"Copy [origin file path] [goal file path]\t\t\t¸´ÖÆÎÄ¼şµ½Ä³Ò»Â·¾­" << endl <<
-		"Open [file path]\t´ò¿ª²¢±à¼­ÎÄ¼ş£¨×¢ÒâÖ»¶ÁÊôĞÔ£©" << endl <<
-		"Attrib [+r|-r] [+h|-h]  [file path]\t\t¸ü¸ÄÎÄ¼şÊôĞÔ£¬¼ÓÖ»¶Á£¬¼õÖ»¶Á£¬¼ÓÒş²Ø£¬¼õÒş²Ø" << endl <<
-		"Viewinodemap\t\tÏÔÊ¾µ±Ç°inodeÎ»Ê¾Í¼×´¿ö" << endl <<
-		"Viewblockmap\t\tÏÔÊ¾µ±Ç°blockÎ»Ê¾Í¼×´¿ö" << endl;
+	cout << "Format\t\t\tåˆå§‹åŒ–ç£ç›˜ï¼Œåˆ’å®šç»“æ„" << endl <<
+		"Mkfile [file path]\t\tåˆ›å»ºæ–‡ä»¶" << endl <<
+		"Mkdir [dir path]\t\tåˆ›å»ºç›®å½•" << endl <<
+		"Cd [dir path]\t\tæ”¹å˜å½“å‰ç›®å½•" << endl <<
+		"Delfile [file path]\tåˆ é™¤æ–‡ä»¶ï¼ˆæ³¨æ„åªè¯»å±æ€§ï¼‰" << endl <<
+		"Deldir [dir path]\tåˆ é™¤ç›®å½•ï¼ˆæ³¨æ„åªè¯»å±æ€§ï¼‰" << endl <<
+		"Dir\t\t\tåˆ—æ–‡ä»¶ç›®å½• ï¼ˆåˆ—å‡ºåå­—å’Œå»ºç«‹æ—¶é—´ï¼Œæ³¨æ„éšè—å±æ€§ï¼‰" << endl <<
+		"Copy [origin file path] [goal file path]\t\t\tå¤åˆ¶æ–‡ä»¶åˆ°æŸä¸€è·¯ç»" << endl <<
+		"Open [file path]\tæ‰“å¼€å¹¶ç¼–è¾‘æ–‡ä»¶ï¼ˆæ³¨æ„åªè¯»å±æ€§ï¼‰" << endl <<
+		"Attrib [+r|-r] [+h|-h]  [file path]\t\tæ›´æ”¹æ–‡ä»¶å±æ€§ï¼ŒåŠ åªè¯»ï¼Œå‡åªè¯»ï¼ŒåŠ éšè—ï¼Œå‡éšè—" << endl <<
+		"Viewinodemap\t\tæ˜¾ç¤ºå½“å‰inodeä½ç¤ºå›¾çŠ¶å†µ" << endl <<
+		"Viewblockmap\t\tæ˜¾ç¤ºå½“å‰blockä½ç¤ºå›¾çŠ¶å†µ" << endl;
 }
