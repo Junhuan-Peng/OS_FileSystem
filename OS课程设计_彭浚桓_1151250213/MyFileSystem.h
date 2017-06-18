@@ -30,27 +30,26 @@ struct DirecoryEntry
 	char fileName[11];//文件或目录名
 	unsigned char flag;//0 表示一般文件，1 表示目录
 	int i_node_number;//i-node 编号——指向文件或者目录的索引节点
-	DirecoryEntry(){
+	DirecoryEntry()
+	{
 		fileName[0] = '\0';
 		flag = -1;
 		i_node_number = -1;
 	}
-	bool init(char fileName_[11],int flag_,int i_node_number_)
-	{
 
+	bool init(char fileName_[11], int flag_, int i_node_number_)
+	{
 		strcpy(this->fileName, fileName_);
 		this->flag = flag_;
 		this->i_node_number = i_node_number_;
 		return true;
 	}
-
 };
 
 //索引数据块
 struct IndexBlock
 {
 	int indexs[16]{-1};//每个盘块号64字节，可以存放16个索引，即16个blockbitmap的下标
-	
 };
 
 //文本文件数据块
@@ -70,8 +69,8 @@ union DataBlock
 	IndexBlock indexBlock;//索引块
 	TxtBlock txtBlock;//文本文件数据块
 	DirectoryFileBlock directoryBlock;//目录文件数据块
-	DataBlock(void){
-
+	DataBlock(void)
+	{
 	}
 };
 
@@ -80,10 +79,12 @@ union DataBlock
 struct RootDirectory
 {
 	DirecoryEntry direcoryEntries[4];
-	bool getAnVoidDirecoryEntry(int &j)
+
+	bool getAnVoidDirecoryEntry(int& j)
 	{
-		for (int i = 0; i < 4; i++){
-			if(direcoryEntries[i].fileName[0]=='\0')
+		for (int i = 0; i < 4; i++)
+		{
+			if (direcoryEntries[i].fileName[0] == '\0')
 			{
 				j = i;
 				return true;
@@ -91,7 +92,6 @@ struct RootDirectory
 		}
 		return false;
 	}
-	
 };
 
 //i-node位图
@@ -124,7 +124,7 @@ struct BlockBitmap
 {
 	bool blocks[512 * 2]{false};
 
-	
+
 	/**
 	 * \brief 获取一个能够使用的数据块的下标
 	 * \param i 
@@ -175,63 +175,166 @@ struct I_NODE
 		strftime(temp, sizeof(temp), "%M", localtime(&t));
 		minutes = *temp;
 	}
-	
+
 
 	//判断当前i-node能否继续添加子i-node(子目录或者子文件）
 	bool isFull(DataBlock dataBlocks[])
 	{
-		if (directAddress[0]!=-1 && directAddress[1]!=-1 && firstClassIndexAddress!=-1 && dataBlocks[firstClassIndexAddress].indexBlock.indexs[15]!=-1)//非空
-		{
-			return true;
+		//一级数据块为空——没有full
+		if (directAddress[0]==-1)
+		{	
+			return false;
 		}
+		//一级数据块为空——没有full
+		if(directAddress[1]==-1)
+		{
+			return false;
+		}
+		//一级索引块为空——没有full
+		if(firstClassIndexAddress==-1)
+		{
+			return false;
+		}
+
+
+		int j;
+		if (dataBlocks[directAddress[0]].directoryBlock.direcoryEntry[3].fileName != '\0')//一级数据块满
+			if (dataBlocks[directAddress[2]].directoryBlock.direcoryEntry[3].fileName != '\0')//一级数据块满
+				if ((j =dataBlocks[firstClassIndexAddress].indexBlock.indexs[15] )!= -1)//最后一个二级数据块存在
+					if(dataBlocks[j].directoryBlock.direcoryEntry[3].fileName!='\0')//满
+						return true;
 		return false;
 	}
 
-	bool addChild(int childINodeNum, DataBlock dataBlocks[], BlockBitmap blockBitMap)
+	bool addChild(int childINodeNum, DataBlock dataBlocks[], BlockBitmap blockBitMap, string path, bool isFile)
 	{
 		//TODO 在这里添加关于增加子节点的代码
-		if (directAddress[0]==-1)
+		for (int i = 0; i < 2; i++)
 		{
-			directAddress[0] = childINodeNum;
-		}else if(directAddress[1]==-1)
-		{
-			directAddress[1] = childINodeNum;
-		}else if (firstClassIndexAddress!=-1)
-		{
-			for (int i = 0;i<15;i++)
+			if (directAddress[0] == -1)
 			{
-				if(dataBlocks[firstClassIndexAddress].indexBlock.indexs[i] == -1)
+				//直接地址为空——申请数据块
+				if (blockBitMap.getABlockNum(directAddress[0]))
 				{
-					dataBlocks[firstClassIndexAddress].indexBlock.indexs[i] = childINodeNum;
+					blockBitMap.blocks[directAddress[0]] = true;
+					DirecoryEntry childDirectory;
+					childDirectory.init(path._Myptr(), 1, childINodeNum);
+					dataBlocks[directAddress[0]].directoryBlock.direcoryEntry[0] = childDirectory;
+					return true;
 				}
-				
+				//没有空余数据块作为一级数据块
+
+				return false;
 			}
-		}else if (firstClassIndexAddress == -1)//直接索引满，一级索引为空，要先申请一个索引块
+			else
+			{
+				//直接地址不为空，需要判断是否还存在空的目录项
+				int z;
+				bool flag;
+				for (z = 0 , flag = false; z < 4; z++)
+				{
+					if (dataBlocks[directAddress[0]].directoryBlock.direcoryEntry[z].fileName == '\0')
+					{
+						flag = true;
+						break;//存在空的目录项
+					}
+				}
+				if (flag)
+				{
+					DirecoryEntry childDirectory;
+					childDirectory.init(path._Myptr(), 1, childINodeNum);
+					dataBlocks[directAddress[0]].directoryBlock.direcoryEntry[z] = childDirectory;
+					return true;
+				}
+			}
+		}
+
+		if (firstClassIndexAddress == -1)//直接索引满，一级索引为空，要先申请一个索引块
 		{
 			int i;
-			if (blockBitMap.getABlockNum(i)){//找到一个空数据块来作为索引块
+			if (blockBitMap.getABlockNum(i))
+			{//找到一个空数据块来作为索引块
 				blockBitMap.blocks[i] = true;//更改对应状态位的值（false->true）
-				dataBlocks[i].indexBlock.indexs[0] = childINodeNum;//将子节点存入索引块中
-				firstClassIndexAddress = i;//更新一级索引块位置
-			}else
+
+				int j;
+				if (blockBitMap.getABlockNum(j))//找到一个空数据块作为目录文件数据块
+				{
+					dataBlocks[i].indexBlock.indexs[0] = j;//将目录文件数据块与索引块连接起来
+					blockBitMap.blocks[j] = true;
+					DirecoryEntry childDirectory;
+					childDirectory.init(path._Myptr(), 1, childINodeNum);
+					dataBlocks[j].directoryBlock.direcoryEntry[0] = childDirectory;
+					firstClassIndexAddress = i;//更新一级索引块位置
+				}
+				else//没有空余数据块作为目录文件数据块
+				{
+					blockBitMap.blocks[i] = false;
+					return false;
+				}
+			}
+			else//没有空余数据块作为索引块
 			{
 				return false;
 			}
 		}
+		else if (firstClassIndexAddress != -1)//一级索引块不为空
+		{
+			//首先要找到一个非空的二级数据块
+			for (size_t i = 0; i < BLOCK_SIZE / 4; i++)
+			{
+				int j;
+				if ((j = dataBlocks[firstClassIndexAddress].indexBlock.indexs[i]) != -1)
+				{
+					//然后再看有没有空的目录项
+					int x;
+					bool flag = false;
+					for (x = 0; x < 4; x++)
+					{
+						if (dataBlocks[j].directoryBlock.direcoryEntry[x].fileName == '\0')
+						{
+							flag = true;
+							break;
+						}
+					}
+
+					if (flag)
+					{
+						DirecoryEntry childDirectory;
+						childDirectory.init(path._Myptr(), 1, childINodeNum);
+						dataBlocks[j].directoryBlock.direcoryEntry[x] = childDirectory;
+						return true;
+					}
+				}
+				else//二级数据块为空，则需要申请一个数据块
+				{
+					int y;
+					if (blockBitMap.getABlockNum(y))
+					{
+						DirecoryEntry childDirectory;
+						childDirectory.init(path._Myptr(), 1, childINodeNum);
+						dataBlocks[y].directoryBlock.direcoryEntry[0] = childDirectory;
+
+						//应该在一级索引块【i】的位置上放置新的数据块
+						dataBlocks[firstClassIndexAddress].indexBlock.indexs[i] = y;
+						return true;
+					}
+
+					return false;
+				}
+			}
+		}
 		return true;
 	}
-
 };
 
 //磁盘
 struct Disc
 {
-	 RootDirectory rootDirectory;
-	 I_NodeBitmap i_nodeBitMap;//描述512个i-node的状态
-	 BlockBitmap blockBitMap;//描述1024块磁盘块的状态
-	 I_NODE i_node_s[512];//512个i-node占用磁盘128块
-	 DataBlock dataBlocks[1024];
-
+	RootDirectory rootDirectory;
+	I_NodeBitmap i_nodeBitMap;//描述512个i-node的状态
+	BlockBitmap blockBitMap;//描述1024块磁盘块的状态
+	I_NODE i_node_s[512];//512个i-node占用磁盘128块
+	DataBlock dataBlocks[1024];
 };
 
 
@@ -289,13 +392,13 @@ private:
 	bool ViewBlockMap();//显示当前block位示图状况
 };
 
-inline Cmd::Cmd() : disc(nullptr), cwd_inode(-1){
+inline Cmd::Cmd() : disc(nullptr), cwd_inode(-1)
+{
 }
 
 
-inline Cmd::Cmd(Disc* disc):cwd_inode(-1)
+inline Cmd::Cmd(Disc* disc): cwd_inode(-1)
 {
-	
 	this->disc = disc;
 }
 

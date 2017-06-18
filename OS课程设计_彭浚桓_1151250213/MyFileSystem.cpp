@@ -100,7 +100,7 @@ bool Cmd::MkDir(string dir){
 		if (disc->i_nodeBitMap.getAnINodeNum(i_node_num)){//找到空i-node
 			disc->i_nodeBitMap.i_node_bitmap[i_node_num] = true;//更改对应i-node的状态
 			disc->i_node_s[i_node_num].init();//初始化i-node——主要是对时间的更改
-			parentINode.addChild(i_node_num, disc->dataBlocks, disc->blockBitMap);//完成父节点到子节点的连接
+			parentINode.addChild(i_node_num, disc->dataBlocks, disc->blockBitMap,dir,false);//完成父节点到子节点的连接
 		} else{
 			cout << "空间不足，无法创建目录！";
 			disc->i_nodeBitMap.i_node_bitmap[i_node_num] = false;//不能创建相应的数据，i-node对应位应该置为false
@@ -126,6 +126,7 @@ bool Cmd::MkDir(string dir){
 }
 
 bool Cmd::Cd(string cmd){
+
 	return true;
 }
 
