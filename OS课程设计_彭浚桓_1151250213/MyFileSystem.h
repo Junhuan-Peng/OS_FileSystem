@@ -49,7 +49,8 @@ struct DirecoryEntry
 //索引数据块
 struct IndexBlock
 {
-	int indexs[16];
+	int indexs[16]{-1};//每个盘块号64字节，可以存放16个索引，即16个blockbitmap的下标
+	
 };
 
 //文本文件数据块
@@ -174,17 +175,49 @@ struct I_NODE
 		strftime(temp, sizeof(temp), "%M", localtime(&t));
 		minutes = *temp;
 	}
+	
 
 	//判断当前i-node能否继续添加子i-node(子目录或者子文件）
-	bool isFull()
+	bool isFull(DataBlock dataBlocks[])
 	{
-		//TODO 增加判断i-node是否满
+		if (directAddress[0]!=-1 && directAddress[1]!=-1 && firstClassIndexAddress!=-1 && dataBlocks[firstClassIndexAddress].indexBlock.indexs[15]!=-1)//非空
+		{
+			return true;
+		}
 		return false;
 	}
 
-	bool addChild(int childINodeNum)
+	bool addChild(int childINodeNum, DataBlock dataBlocks[], BlockBitmap blockBitMap)
 	{
 		//TODO 在这里添加关于增加子节点的代码
+		if (directAddress[0]==-1)
+		{
+			directAddress[0] = childINodeNum;
+		}else if(directAddress[1]==-1)
+		{
+			directAddress[1] = childINodeNum;
+		}else if (firstClassIndexAddress!=-1)
+		{
+			for (int i = 0;i<15;i++)
+			{
+				if(dataBlocks[firstClassIndexAddress].indexBlock.indexs[i] == -1)
+				{
+					dataBlocks[firstClassIndexAddress].indexBlock.indexs[i] = childINodeNum;
+				}
+				
+			}
+		}else if (firstClassIndexAddress == -1)//直接索引满，一级索引为空，要先申请一个索引块
+		{
+			int i;
+			if (blockBitMap.getABlockNum(i)){//找到一个空数据块来作为索引块
+				blockBitMap.blocks[i] = true;//更改对应状态位的值（false->true）
+				dataBlocks[i].indexBlock.indexs[0] = childINodeNum;//将子节点存入索引块中
+				firstClassIndexAddress = i;//更新一级索引块位置
+			}else
+			{
+				return false;
+			}
+		}
 		return true;
 	}
 
@@ -193,11 +226,11 @@ struct I_NODE
 //磁盘
 struct Disc
 {
-	RootDirectory rootDirectory;
-	I_NodeBitmap i_nodeBitMap;//描述512个i-node的状态
-	BlockBitmap blockBitMap;//描述1024块磁盘块的状态
-	I_NODE i_node_s[512];//512个i-node占用磁盘128块
-	DataBlock dataBlock[1024];
+	 RootDirectory rootDirectory;
+	 I_NodeBitmap i_nodeBitMap;//描述512个i-node的状态
+	 BlockBitmap blockBitMap;//描述1024块磁盘块的状态
+	 I_NODE i_node_s[512];//512个i-node占用磁盘128块
+	 DataBlock dataBlocks[1024];
 
 };
 
