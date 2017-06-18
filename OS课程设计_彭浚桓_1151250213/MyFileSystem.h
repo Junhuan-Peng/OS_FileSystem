@@ -6,11 +6,10 @@
 struct TxtBlock;
 using namespace std;
 
-// TODO: 在此处引用程序需要的其他头文件
 
 //一些常量的定义
 const int BLOCK_SIZE = 64; //磁盘块的大小——64字节
-const int DIRECORY_ENTRY = 16;//目录项的大小——16字节
+
 
 struct Disc;
 struct RootDirectory;
@@ -25,20 +24,17 @@ struct TxtBlock;
 struct DirectoryFileBlock;
 
 //目录项
-struct DirecoryEntry
-{
+struct DirecoryEntry {
 	char fileName[11];//文件或目录名
 	unsigned char flag;//0 表示一般文件，1 表示目录
 	int i_node_number;//i-node 编号——指向文件或者目录的索引节点
-	DirecoryEntry()
-	{
+	DirecoryEntry() {
 		fileName[0] = '\0';
 		flag = -1;
 		i_node_number = -1;
 	}
 
-	bool init(char fileName_[11], int flag_, int i_node_number_)
-	{
+	bool init(char fileName_[11], int flag_, int i_node_number_) {
 		strcpy(this->fileName, fileName_);
 		this->flag = flag_;
 		this->i_node_number = i_node_number_;
@@ -47,45 +43,36 @@ struct DirecoryEntry
 };
 
 //索引数据块
-struct IndexBlock
-{
+struct IndexBlock {
 	int indexs[16]{-1};//每个盘块号64字节，可以存放16个索引，即16个blockbitmap的下标
 };
 
 //文本文件数据块
-struct TxtBlock
-{
+struct TxtBlock {
 	char txt[BLOCK_SIZE];
 };
 
 //目录文件数据块
-struct DirectoryFileBlock
-{
+struct DirectoryFileBlock {
 	DirecoryEntry direcoryEntry[4];
 };
 
-union DataBlock
-{
+union DataBlock {
 	IndexBlock indexBlock;//索引块
 	TxtBlock txtBlock;//文本文件数据块
 	DirectoryFileBlock directoryBlock;//目录文件数据块
-	DataBlock(void)
-	{
+	DataBlock(void) {
 	}
 };
 
 
 //根目录——最多四个目录项
-struct RootDirectory
-{
+struct RootDirectory {
 	DirecoryEntry direcoryEntries[4];
 
-	bool getAnVoidDirecoryEntry(int& j)
-	{
-		for (int i = 0; i < 4; i++)
-		{
-			if (direcoryEntries[i].fileName[0] == '\0')
-			{
+	bool getAnVoidDirecoryEntry(int& j) {
+		for (int i = 0; i < 4; i++) {
+			if (direcoryEntries[i].fileName[0] == '\0') {
 				j = i;
 				return true;
 			}
@@ -95,8 +82,7 @@ struct RootDirectory
 };
 
 //i-node位图
-struct I_NodeBitmap
-{
+struct I_NodeBitmap {
 	bool i_node_bitmap[512]{false};
 	//获取一个能够使用的i-node的下标
 
@@ -105,8 +91,7 @@ struct I_NodeBitmap
 	 * \param i 用于存储下标的整形
 	 * \return 如果存在->true
 	 */
-	bool getAnINodeNum(int& i)
-	{
+	bool getAnINodeNum(int& i) {
 		i = 0;
 		// ReSharper disable once CppPossiblyErroneousEmptyStatements
 		while (i < 1024 && i_node_bitmap[i++] != false);
@@ -120,8 +105,7 @@ struct I_NodeBitmap
 };
 
 //数据块位图——描述磁盘的状态
-struct BlockBitmap
-{
+struct BlockBitmap {
 	bool blocks[512 * 2]{false};
 
 
@@ -130,19 +114,18 @@ struct BlockBitmap
 	 * \param i 
 	 * \return 如果存在->true
 	 */
-	bool getABlockNum(int& i)
-	{
+	bool getABlockNum(int& i) {
 		i = 0;
 		// ReSharper disable once CppPossiblyErroneousEmptyStatements
 		while (i < 1024 && blocks[i++] != false);
+		i -= 1;
 		return !blocks[i];
 	}
 };
 
 //i-node 长度为16字节（1+1+1+1+2*4+4）
 //在文件超出两个盘块时，将使用一级索引地址，就是说文件最大为18个盘块
-struct I_NODE
-{
+struct I_NODE {
 	unsigned char isReadOnly;// 是否只读
 	unsigned char isHide;// 是否隐藏
 	unsigned char hour;// 建立文件系统时间的小时
@@ -150,8 +133,7 @@ struct I_NODE
 	int directAddress[2];// 直接盘块地址——指向一个数据块
 	int firstClassIndexAddress;// 一级索引地址——指向一个索引块
 
-	I_NODE()
-	{
+	I_NODE() {
 		isReadOnly = '0';
 		isHide = '0';
 
@@ -166,8 +148,7 @@ struct I_NODE
 		firstClassIndexAddress = -1;
 	}
 
-	void init()
-	{
+	void init() {
 		time_t t = time(nullptr);
 		char temp[1];
 		strftime(temp, sizeof(temp), "%H", localtime(&t));
@@ -178,82 +159,75 @@ struct I_NODE
 
 
 	//判断当前i-node能否继续添加子i-node(子目录或者子文件）
-	bool isFull(DataBlock dataBlocks[])
-	{
+	bool isFull(DataBlock dataBlocks[]) {
 		//一级数据块为空——没有full
-		if (directAddress[0]==-1)
-		{	
+		if (directAddress[0] == -1) {
 			return false;
 		}
 		//一级数据块为空——没有full
-		if(directAddress[1]==-1)
-		{
+		if (directAddress[1] == -1) {
 			return false;
 		}
 		//一级索引块为空——没有full
-		if(firstClassIndexAddress==-1)
-		{
+		if (firstClassIndexAddress == -1) {
 			return false;
 		}
 
 
 		int j;
-		if (dataBlocks[directAddress[0]].directoryBlock.direcoryEntry[3].fileName != '\0')//一级数据块满
-			if (dataBlocks[directAddress[2]].directoryBlock.direcoryEntry[3].fileName != '\0')//一级数据块满
-				if ((j =dataBlocks[firstClassIndexAddress].indexBlock.indexs[15] )!= -1)//最后一个二级数据块存在
-					if(dataBlocks[j].directoryBlock.direcoryEntry[3].fileName!='\0')//满
+		if (dataBlocks[directAddress[0]].directoryBlock.direcoryEntry[3].fileName != nullptr)//一级数据块满
+			if (dataBlocks[directAddress[2]].directoryBlock.direcoryEntry[3].fileName != nullptr)//一级数据块满
+				if ((j = dataBlocks[firstClassIndexAddress].indexBlock.indexs[15]) != -1)//最后一个二级数据块存在
+					if (dataBlocks[j].directoryBlock.direcoryEntry[3].fileName != nullptr)//满
 						return true;
 		return false;
 	}
 
-	bool addChild(int childINodeNum, DataBlock dataBlocks[], BlockBitmap blockBitMap, string path, bool isFile)
-	{
+	bool addChild(int childINodeNum, DataBlock dataBlocks[], BlockBitmap blockBitMap, string path, bool isDir) {
 		//TODO 在这里添加关于增加子节点的代码
-		for (int i = 0; i < 2; i++)
-		{
-			if (directAddress[0] == -1)
-			{
+		for (int i = 0; i < 2; i++) {
+			if (directAddress[i] == -1) {
 				//直接地址为空——申请数据块
-				if (blockBitMap.getABlockNum(directAddress[0]))
-				{
+				if (blockBitMap.getABlockNum(directAddress[0])) {
 					blockBitMap.blocks[directAddress[0]] = true;
 					DirecoryEntry childDirectory;
-					childDirectory.init(path._Myptr(), 1, childINodeNum);
-					dataBlocks[directAddress[0]].directoryBlock.direcoryEntry[0] = childDirectory;
+					childDirectory.init(path._Myptr(), isDir, childINodeNum);
+					dataBlocks[directAddress[i]].directoryBlock.direcoryEntry[0] = childDirectory;
 					return true;
 				}
 				//没有空余数据块作为一级数据块
 
 				return false;
 			}
-			else
-			{
-				//直接地址不为空，需要判断是否还存在空的目录项
+			//直接地址不为空，需要判断是否还存在空的目录项
+			if (dataBlocks[directAddress[i]].directoryBlock.direcoryEntry[0].fileName[0] != '\0') {
+				//先判断该数据块是否是目录文件数据块
+				//如果是，那么第一个filename一定不是'\0'
+				//如果不是，则不能作为目录文件数据块
+
 				int z;
 				bool flag;
-				for (z = 0 , flag = false; z < 4; z++)
-				{
-					if (dataBlocks[directAddress[0]].directoryBlock.direcoryEntry[z].fileName == '\0')
-					{
+				for (z = 1 , flag = false; z < 4; z++) {
+
+					if (dataBlocks[directAddress[i]].directoryBlock.direcoryEntry[z].fileName[0] == '\0') {
 						flag = true;
 						break;//存在空的目录项
 					}
 				}
-				if (flag)
-				{
+				if (flag) {
 					DirecoryEntry childDirectory;
-					childDirectory.init(path._Myptr(), 1, childINodeNum);
-					dataBlocks[directAddress[0]].directoryBlock.direcoryEntry[z] = childDirectory;
+					childDirectory.init(path._Myptr(), isDir, childINodeNum);
+					dataBlocks[directAddress[i]].directoryBlock.direcoryEntry[z] = childDirectory;
 					return true;
 				}
 			}
+			
 		}
 
 		if (firstClassIndexAddress == -1)//直接索引满，一级索引为空，要先申请一个索引块
 		{
 			int i;
-			if (blockBitMap.getABlockNum(i))
-			{//找到一个空数据块来作为索引块
+			if (blockBitMap.getABlockNum(i)) {//找到一个空数据块来作为索引块
 				blockBitMap.blocks[i] = true;//更改对应状态位的值（false->true）
 
 				int j;
@@ -262,7 +236,7 @@ struct I_NODE
 					dataBlocks[i].indexBlock.indexs[0] = j;//将目录文件数据块与索引块连接起来
 					blockBitMap.blocks[j] = true;
 					DirecoryEntry childDirectory;
-					childDirectory.init(path._Myptr(), 1, childINodeNum);
+					childDirectory.init(path._Myptr(), isDir, childINodeNum);
 					dataBlocks[j].directoryBlock.direcoryEntry[0] = childDirectory;
 					firstClassIndexAddress = i;//更新一级索引块位置
 				}
@@ -280,36 +254,35 @@ struct I_NODE
 		else if (firstClassIndexAddress != -1)//一级索引块不为空
 		{
 			//首先要找到一个非空的二级数据块
-			for (size_t i = 0; i < BLOCK_SIZE / 4; i++)
-			{
+			for (size_t i = 0; i < BLOCK_SIZE / 4; i++) {
 				int j;
-				if ((j = dataBlocks[firstClassIndexAddress].indexBlock.indexs[i]) != -1)
-				{
+				if ((j = dataBlocks[firstClassIndexAddress].indexBlock.indexs[i]) != -1) {
 					//然后再看有没有空的目录项
-					int x;
-					bool flag = false;
-					for (x = 0; x < 4; x++)
-					{
-						if (dataBlocks[j].directoryBlock.direcoryEntry[x].fileName == '\0')
-						{
-							flag = true;
-							break;
+					if (dataBlocks[firstClassIndexAddress].directoryBlock.direcoryEntry[0].fileName[0] != '\0') {
+						//先判断是否是目录数据块
+						int x;
+						bool flag = false;
+						for (x = 1; x < 4; x++) {
+							if (dataBlocks[j].directoryBlock.direcoryEntry[x].fileName[0] == '\0') {
+								flag = true;
+								break;
+							}
+						}
+
+						if (flag) {
+							DirecoryEntry childDirectory;
+							childDirectory.init(path._Myptr(), isDir, childINodeNum);
+							dataBlocks[j].directoryBlock.direcoryEntry[x] = childDirectory;
+							return true;
 						}
 					}
+				
 
-					if (flag)
-					{
-						DirecoryEntry childDirectory;
-						childDirectory.init(path._Myptr(), 1, childINodeNum);
-						dataBlocks[j].directoryBlock.direcoryEntry[x] = childDirectory;
-						return true;
-					}
 				}
 				else//二级数据块为空，则需要申请一个数据块
 				{
 					int y;
-					if (blockBitMap.getABlockNum(y))
-					{
+					if (blockBitMap.getABlockNum(y)) {
 						DirecoryEntry childDirectory;
 						childDirectory.init(path._Myptr(), 1, childINodeNum);
 						dataBlocks[y].directoryBlock.direcoryEntry[0] = childDirectory;
@@ -323,13 +296,58 @@ struct I_NODE
 				}
 			}
 		}
+		return false;
+	}
+
+	bool existChild(string child, DataBlock dataBlocks[], int& inodeNum) {
+		//依据
+		inodeNum = -1;
+		for (size_t j = 0; j < 2; j++) {
+			if (directAddress[j] != -1) {
+				DataBlock datablock = dataBlocks[directAddress[j]];
+				if (datablock.directoryBlock.direcoryEntry[0].fileName[0] != '\0'){//判断是否是目录文件块
+					for (int i = 0; i < 4; i++){
+						DirecoryEntry directEntry = datablock.directoryBlock.direcoryEntry[i];
+						if (child._Equal(directEntry.fileName)){
+							inodeNum = directEntry.i_node_number;
+							if (directEntry.flag == 1)//目录
+							{
+								return true;
+							}
+							return false; //一般文件
+						}
+					}
+				}
+
+			}
+		}
+		if (firstClassIndexAddress != -1)//以及索引不为空
+		{
+			DataBlock datablock = dataBlocks[firstClassIndexAddress];
+			for (size_t i = 0; i < 16; i++) {
+				int j;
+				if ((j = datablock.indexBlock.indexs[i]) != -1) {
+					for (int k = 0; k < 4; k++) {
+						DirecoryEntry directEntry = datablock.directoryBlock.direcoryEntry[i];
+						if (directEntry.fileName == child.c_str()) {
+							inodeNum = directEntry.i_node_number;
+							if (directEntry.flag == 1)//目录
+							{
+								return true;
+							}
+							return false; //一般文件
+						}
+					}
+				}
+			}
+		}
+
 		return true;
 	}
 };
 
 //磁盘
-struct Disc
-{
+struct Disc {
 	RootDirectory rootDirectory;
 	I_NodeBitmap i_nodeBitMap;//描述512个i-node的状态
 	BlockBitmap blockBitMap;//描述1024块磁盘块的状态
@@ -338,8 +356,7 @@ struct Disc
 };
 
 
-class Cmd
-{
+class Cmd {
 public:
 
 	Cmd(Disc* disc);
@@ -355,23 +372,19 @@ private:
 	int cwd_inode;
 	string cwd;
 public:
-	int getCwdINode() const
-	{
+	int getCwdINode() const {
 		return cwd_inode;
 	}
 
-	void setCwdINode(int cwd_inode)
-	{
+	void setCwdINode(int cwd_inode) {
 		this->cwd_inode = cwd_inode;
 	}
 
-	string getCwd() const
-	{
+	string getCwd() const {
 		return cwd;
 	}
 
-	void setCwd(const string& cwd)
-	{
+	void setCwd(const string& cwd) {
 		this->cwd = cwd;
 	}
 
@@ -379,8 +392,7 @@ private:
 	Cmd();
 	static Cmd* instance;
 	bool Format();//初始化磁盘，划定结构
-	bool MkFile(string filepath);//创建文件
-	bool MkDir(string dir);//创建目录
+	bool Mk(string dir, bool isDir);//创建目录(true)或文件（false）
 	bool Cd(string dir);//改变当前目录
 	bool DelFile(string filepath);//删除文件（注意只读属性）
 	bool DelDir(string dir);//删除目录
@@ -392,24 +404,19 @@ private:
 	bool ViewBlockMap();//显示当前block位示图状况
 };
 
-inline Cmd::Cmd() : disc(nullptr), cwd_inode(-1)
-{
+inline Cmd::Cmd() : disc(nullptr), cwd_inode(-1) {
 }
 
 
-inline Cmd::Cmd(Disc* disc): cwd_inode(-1)
-{
+inline Cmd::Cmd(Disc* disc): cwd_inode(-1) {
 	this->disc = disc;
 }
 
-inline Cmd::~Cmd()
-{
+inline Cmd::~Cmd() {
 }
 
-inline Cmd* Cmd::getInstance(Disc* disc)
-{
-	if (instance == nullptr)
-	{
+inline Cmd* Cmd::getInstance(Disc* disc) {
+	if (instance == nullptr) {
 		instance = new Cmd(disc);
 	}
 
@@ -417,20 +424,16 @@ inline Cmd* Cmd::getInstance(Disc* disc)
 }
 
 //完成命令的分割——默认以空格作为分隔符
-inline string* Cmd::split(string s, char c = ' ')
-{
+inline string* Cmd::split(string s, char c = ' ') {
 	string* strings = new string[3];
 	string temps(s);
 	// ReSharper disable once CppInitializedValueIsAlwaysRewritten
-	for (auto i = 0, j = 0;; j++)
-	{
-		if ((i = temps.find_first_of(c)) != string::npos)
-		{
+	for (auto i = 0, j = 0;; j++) {
+		if ((i = temps.find_first_of(c)) != string::npos) {
 			strings[j] = string(temps, 0, i);
 			temps = string(temps, i + 1);
 		}
-		else
-		{
+		else {
 			strings[j] = string(temps, 0, i);
 			break;
 		}
