@@ -77,6 +77,7 @@ bool Cmd::parse(string cmd) {
 		ViewBlockMap();
 	}
 	else if (strings[0]._Equal("test")) {
+		//创建大量目录以检测程序是否正确
 		for (int i = 0; i < 70; i++) {
 			string temp;
 
@@ -152,6 +153,8 @@ bool Cmd::Mk(string dir, bool isDir) {
 }
 
 bool Cmd::Cd(string path) {
+	
+
 	if (cwd_inode == -1)//根目录
 	{
 
@@ -237,3 +240,5 @@ void usage() {
 		"Viewinodemap\t\t显示当前inode位示图状况" << endl <<
 		"Viewblockmap\t\t显示当前block位示图状况" << endl;
 }
+
+

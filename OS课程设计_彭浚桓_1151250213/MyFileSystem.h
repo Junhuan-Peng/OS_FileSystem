@@ -35,7 +35,7 @@ struct DirecoryEntry {
 	}
 
 	bool init(char fileName_[11], int flag_, int i_node_number_) {
-		strcpy(this->fileName, fileName_);
+		strcpy_s(this->fileName, fileName_);
 		this->flag = flag_;
 		this->i_node_number = i_node_number_;
 		return true;
@@ -66,7 +66,7 @@ union DataBlock {
 	IndexBlock indexBlock;//索引块
 	TxtBlock txtBlock;//文本文件数据块
 	DirectoryFileBlock directoryBlock;//目录文件数据块
-	DataBlock(void) {
+	DataBlock() {
 	}
 };
 
@@ -178,7 +178,7 @@ struct I_NODE {
 			return false;
 		}
 
-		bool flag = false;
+		
 		if (dataBlocks[directAddress[0]].directoryBlock.direcoryEntry[0].flag == 1)
 			if (dataBlocks[directAddress[0]].directoryBlock.direcoryEntry[3].fileName[0] == -51)
 				return false;
@@ -427,11 +427,11 @@ private:
 	bool ViewBlockMap();//显示当前block位示图状况
 };
 
-inline Cmd::Cmd() : disc(nullptr), cwd_inode(-1) {
+inline Cmd::Cmd() : disc(nullptr), cwd_inode(-1), preview_inode(-1){
 }
 
 
-inline Cmd::Cmd(Disc* disc): cwd_inode(-1) {
+inline Cmd::Cmd(Disc* disc): cwd_inode(-1),preview_inode(-1) {
 	this->disc = disc;
 }
 
