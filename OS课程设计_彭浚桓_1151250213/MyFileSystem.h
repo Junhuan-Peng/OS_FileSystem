@@ -29,7 +29,7 @@ struct DirecoryEntry {
 	unsigned char flag;//0 表示一般文件，1 表示目录
 	int i_node_number;//i-node 编号——指向文件或者目录的索引节点
 	DirecoryEntry() {
-		fileName[0] = '\0';
+		fileName[0] = '#';
 		flag = -1;
 		i_node_number = -1;
 	}
@@ -44,7 +44,12 @@ struct DirecoryEntry {
 
 //索引数据块
 struct IndexBlock {
-	int indexs[16]{-1};//每个盘块号64字节，可以存放16个索引，即16个blockbitmap的下标
+	int indexs[16];//每个盘块号64字节，可以存放16个索引，即16个blockbitmap的下标
+	IndexBlock() {
+		for (size_t i = 0; i < BLOCK_SIZE/4; i++){
+			indexs[i] = -1;
+		}
+	}
 };
 
 //文本文件数据块
@@ -72,7 +77,7 @@ struct RootDirectory {
 
 	bool getAnVoidDirecoryEntry(int& j) {
 		for (int i = 0; i < 4; i++) {
-			if (direcoryEntries[i].fileName[0] == '\0') {
+			if (direcoryEntries[i].fileName[0] == '#') {
 				j = i;
 				return true;
 			}
@@ -173,23 +178,35 @@ struct I_NODE {
 			return false;
 		}
 
-
-		int j;
-		if (dataBlocks[directAddress[0]].directoryBlock.direcoryEntry[3].fileName[0] != '\0')//一级数据块满
-			if (dataBlocks[directAddress[2]].directoryBlock.direcoryEntry[3].fileName[0] != '\0')//一级数据块满
-				if ((j = dataBlocks[firstClassIndexAddress].indexBlock.indexs[15]) != -1)//最后一个二级数据块存在
-					if (dataBlocks[j].directoryBlock.direcoryEntry[3].fileName[0] != '\0')//满
-						return true;
-		return false;
+		bool flag = false;
+		if (dataBlocks[directAddress[0]].directoryBlock.direcoryEntry[0].flag == 1)
+			if (dataBlocks[directAddress[0]].directoryBlock.direcoryEntry[3].fileName[0] == -51)
+				return false;
+		if (dataBlocks[directAddress[1]].directoryBlock.direcoryEntry[0].flag == 1)
+			if (dataBlocks[directAddress[1]].directoryBlock.direcoryEntry[3].fileName[0] == -51)
+				return false;
+		for (int i = 0; i < 16; i++) {
+			int j = dataBlocks[firstClassIndexAddress].indexBlock.indexs[i];
+			if ( j!= -1) {
+				DataBlock datablock = dataBlocks[j];
+				if (datablock.directoryBlock.direcoryEntry[0].flag == 1) {
+					if (datablock.directoryBlock.direcoryEntry[3].fileName[0] == -51) {
+						return false;
+					}
+				}
+			}
+			else { return false; }
+		}
+		return true;
 	}
 
-	bool addChild(int childINodeNum, DataBlock dataBlocks[], BlockBitmap blockBitMap, string path, bool isDir) {
+	bool addChild(int childINodeNum, DataBlock dataBlocks[], BlockBitmap &blockBitMap, string path, bool isDir){
 		//TODO 在这里添加关于增加子节点的代码
 		for (int i = 0; i < 2; i++) {
 			if (directAddress[i] == -1) {
 				//直接地址为空——申请数据块
-				if (blockBitMap.getABlockNum(directAddress[0])) {
-					blockBitMap.blocks[directAddress[0]] = true;
+				if (blockBitMap.getABlockNum(directAddress[i])) {
+					blockBitMap.blocks[directAddress[i]] = true;
 					DirecoryEntry childDirectory;
 					childDirectory.init(path._Myptr(), isDir, childINodeNum);
 					dataBlocks[directAddress[i]].directoryBlock.direcoryEntry[0] = childDirectory;
@@ -200,16 +217,16 @@ struct I_NODE {
 				return false;
 			}
 			//直接地址不为空，需要判断是否还存在空的目录项
-			if (dataBlocks[directAddress[i]].directoryBlock.direcoryEntry[0].fileName[0] != '\0') {
+			if (dataBlocks[directAddress[i]].directoryBlock.direcoryEntry[0].flag == 1) {
 				//先判断该数据块是否是目录文件数据块
-				//如果是，那么第一个filename一定不是'\0'
+
 				//如果不是，则不能作为目录文件数据块
 
 				int z;
 				bool flag;
-				for (z = 1 , flag = false; z < 4; z++) {
+				for (z = 0 , flag = false; z < 4; z++) {
 
-					if (dataBlocks[directAddress[i]].directoryBlock.direcoryEntry[z].fileName[0] == '\0') {
+					if (dataBlocks[directAddress[i]].directoryBlock.direcoryEntry[z].fileName[0] == -51) {
 						flag = true;
 						break;//存在空的目录项
 					}
@@ -229,7 +246,10 @@ struct I_NODE {
 			int i;
 			if (blockBitMap.getABlockNum(i)) {//找到一个空数据块来作为索引块
 				blockBitMap.blocks[i] = true;//更改对应状态位的值（false->true）
-
+				for (size_t m = 0; m < BLOCK_SIZE/4; m++){
+					dataBlocks[i].indexBlock.indexs[m]=-1;
+				}
+				
 				int j;
 				if (blockBitMap.getABlockNum(j))//找到一个空数据块作为目录文件数据块
 				{
@@ -258,12 +278,12 @@ struct I_NODE {
 				int j;
 				if ((j = dataBlocks[firstClassIndexAddress].indexBlock.indexs[i]) != -1) {
 					//然后再看有没有空的目录项
-					if (dataBlocks[firstClassIndexAddress].directoryBlock.direcoryEntry[0].fileName[0] != '\0') {
+					if (dataBlocks[j].directoryBlock.direcoryEntry[0].flag == 1) {
 						//先判断是否是目录数据块
 						int x;
 						bool flag = false;
 						for (x = 1; x < 4; x++) {
-							if (dataBlocks[j].directoryBlock.direcoryEntry[x].fileName[0] == '\0') {
+							if (dataBlocks[j].directoryBlock.direcoryEntry[x].fileName[0] == -51) {
 								flag = true;
 								break;
 							}
@@ -283,6 +303,7 @@ struct I_NODE {
 				{
 					int y;
 					if (blockBitMap.getABlockNum(y)) {
+						blockBitMap.blocks[y] = true;
 						DirecoryEntry childDirectory;
 						childDirectory.init(path._Myptr(), 1, childINodeNum);
 						dataBlocks[y].directoryBlock.direcoryEntry[0] = childDirectory;
@@ -305,7 +326,7 @@ struct I_NODE {
 		for (size_t j = 0; j < 2; j++) {
 			if (directAddress[j] != -1) {
 				DataBlock datablock = dataBlocks[directAddress[j]];
-				if (datablock.directoryBlock.direcoryEntry[0].fileName[0] != '\0') {//判断是否是目录文件块
+				if (datablock.directoryBlock.direcoryEntry[0].flag == 1) {//判断是否是目录文件块
 					for (int i = 0; i < 4; i++) {
 						DirecoryEntry directEntry = datablock.directoryBlock.direcoryEntry[i];
 						if (child._Equal(directEntry.fileName)) {
@@ -321,21 +342,23 @@ struct I_NODE {
 
 			}
 		}
-		if (firstClassIndexAddress != -1)//以及索引不为空
+		if (firstClassIndexAddress != -1)//一级索引不为空
 		{
 			DataBlock datablock = dataBlocks[firstClassIndexAddress];
 			for (size_t i = 0; i < 16; i++) {
-				auto j = 0;
-				if ((j = datablock.indexBlock.indexs[i]) != -1) {
-					for (int k = 0; k < 4; k++) {
-						DirecoryEntry directEntry = datablock.directoryBlock.direcoryEntry[i];
-						if (child._Equal(directEntry.fileName)) {
-							inodeNum = directEntry.i_node_number;
-							if (directEntry.flag == 1)//目录
-							{
-								return true;
+				int j;
+				if ((j = datablock.indexBlock.indexs[i]) != -1) {//拿到非空二级数据块
+					if (dataBlocks[j].directoryBlock.direcoryEntry[0].flag == 1){//判断是否是目录文件数据块
+						for (int k = 0; k < 4; k++){
+							DirecoryEntry directEntry = dataBlocks[j].directoryBlock.direcoryEntry[k];
+							if (child._Equal(directEntry.fileName)){
+								inodeNum = directEntry.i_node_number;
+								if (directEntry.flag == 1)//目录
+								{
+									return true;
+								}
+								return false; //一般文件
 							}
-							return false; //一般文件
 						}
 					}
 				}

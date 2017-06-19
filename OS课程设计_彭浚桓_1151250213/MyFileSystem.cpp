@@ -4,6 +4,9 @@
 
 #include "MyFileSystem.h"//定义基本结构
 #include <iostream>
+#include <sstream>
+
+using namespace std;
 
 void usage();
 Cmd* Cmd::instance = nullptr;
@@ -72,6 +75,17 @@ bool Cmd::parse(string cmd) {
 	}
 	else if (strings[0]._Equal("Viewblockmap")) {
 		ViewBlockMap();
+	} else if (strings[0]._Equal("test"))
+	{
+		for (int i = 0; i < 70; i++){
+			string temp;
+			
+			std::stringstream ss;
+			
+			ss << i;
+			ss >> temp;
+			Mk(temp, true);
+		}
 	}
 	else {
 		cout << strings[0] << "找不到命令！请重新输入" << endl;
@@ -157,6 +171,7 @@ bool Cmd::Cd(string path) {
 		cout << path << "不存在" << endl;
 		return false;
 	}
+
 	int childINode;
 	bool isDir;
 	I_NODE parentINode = disc->i_node_s[cwd_inode];
