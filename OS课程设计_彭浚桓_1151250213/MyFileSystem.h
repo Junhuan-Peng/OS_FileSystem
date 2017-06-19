@@ -175,10 +175,10 @@ struct I_NODE {
 
 
 		int j;
-		if (dataBlocks[directAddress[0]].directoryBlock.direcoryEntry[3].fileName != nullptr)//一级数据块满
-			if (dataBlocks[directAddress[2]].directoryBlock.direcoryEntry[3].fileName != nullptr)//一级数据块满
+		if (dataBlocks[directAddress[0]].directoryBlock.direcoryEntry[3].fileName[0] != '\0')//一级数据块满
+			if (dataBlocks[directAddress[2]].directoryBlock.direcoryEntry[3].fileName[0] != '\0')//一级数据块满
 				if ((j = dataBlocks[firstClassIndexAddress].indexBlock.indexs[15]) != -1)//最后一个二级数据块存在
-					if (dataBlocks[j].directoryBlock.direcoryEntry[3].fileName != nullptr)//满
+					if (dataBlocks[j].directoryBlock.direcoryEntry[3].fileName[0] != '\0')//满
 						return true;
 		return false;
 	}
@@ -221,7 +221,7 @@ struct I_NODE {
 					return true;
 				}
 			}
-			
+
 		}
 
 		if (firstClassIndexAddress == -1)//直接索引满，一级索引为空，要先申请一个索引块
@@ -276,7 +276,7 @@ struct I_NODE {
 							return true;
 						}
 					}
-				
+
 
 				}
 				else//二级数据块为空，则需要申请一个数据块
@@ -305,10 +305,10 @@ struct I_NODE {
 		for (size_t j = 0; j < 2; j++) {
 			if (directAddress[j] != -1) {
 				DataBlock datablock = dataBlocks[directAddress[j]];
-				if (datablock.directoryBlock.direcoryEntry[0].fileName[0] != '\0'){//判断是否是目录文件块
-					for (int i = 0; i < 4; i++){
+				if (datablock.directoryBlock.direcoryEntry[0].fileName[0] != '\0') {//判断是否是目录文件块
+					for (int i = 0; i < 4; i++) {
 						DirecoryEntry directEntry = datablock.directoryBlock.direcoryEntry[i];
-						if (child._Equal(directEntry.fileName)){
+						if (child._Equal(directEntry.fileName)) {
 							inodeNum = directEntry.i_node_number;
 							if (directEntry.flag == 1)//目录
 							{
@@ -325,11 +325,11 @@ struct I_NODE {
 		{
 			DataBlock datablock = dataBlocks[firstClassIndexAddress];
 			for (size_t i = 0; i < 16; i++) {
-				int j;
+				auto j = 0;
 				if ((j = datablock.indexBlock.indexs[i]) != -1) {
 					for (int k = 0; k < 4; k++) {
 						DirecoryEntry directEntry = datablock.directoryBlock.direcoryEntry[i];
-						if (directEntry.fileName == child.c_str()) {
+						if (child._Equal(directEntry.fileName)) {
 							inodeNum = directEntry.i_node_number;
 							if (directEntry.flag == 1)//目录
 							{
