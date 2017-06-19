@@ -75,13 +75,13 @@ bool Cmd::parse(string cmd) {
 	}
 	else if (strings[0]._Equal("Viewblockmap")) {
 		ViewBlockMap();
-	}
-	else if (strings[0]._Equal("test")) {
-		for (int i = 0; i < 70; i++) {
+	} else if (strings[0]._Equal("test"))
+	{
+		for (int i = 0; i < 70; i++){
 			string temp;
-
+			
 			std::stringstream ss;
-
+			
 			ss << i;
 			ss >> temp;
 			Mk(temp, true);
@@ -113,7 +113,7 @@ bool Cmd::Format() {
 bool Cmd::Mk(string dir, bool isDir) {
 	int i_node_num;
 	if (cwd_inode != -1) {//非根目录
-		I_NODE* parentINode = &(disc->i_node_s[cwd_inode]);
+		I_NODE *parentINode = &(disc->i_node_s[cwd_inode]);
 		if (parentINode->isFull(disc->dataBlocks)) {
 			cout << "该目录下已满，不能再添加任何" << (isDir ? "目录" : "文件") << endl;
 			return false;
@@ -160,7 +160,7 @@ bool Cmd::Cd(string path) {
 			if (path._Equal(direcoryEntry.fileName)) {//同名
 				if (direcoryEntry.flag == 1) {//目录
 					cwd_inode = direcoryEntry.i_node_number;
-					cwd = cwd + path + "/";
+					cwd = cwd  + path + "/";
 					return true;
 				}
 				cout << path << "不是目录" << endl;
@@ -180,7 +180,7 @@ bool Cmd::Cd(string path) {
 		if (isDir)//true表示目录
 		{
 			cwd_inode = childINode;
-			cwd = cwd + path + "/";
+			cwd = cwd  + path+"/";
 			return true;
 		}
 		cout << path << "不是目录" << endl;

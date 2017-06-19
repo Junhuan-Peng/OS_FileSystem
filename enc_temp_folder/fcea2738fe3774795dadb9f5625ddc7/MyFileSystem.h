@@ -46,7 +46,7 @@ struct DirecoryEntry {
 struct IndexBlock {
 	int indexs[16];//每个盘块号64字节，可以存放16个索引，即16个blockbitmap的下标
 	IndexBlock() {
-		for (size_t i = 0; i < BLOCK_SIZE / 4; i++) {
+		for (size_t i = 0; i < BLOCK_SIZE/4; i++){
 			indexs[i] = -1;
 		}
 	}
@@ -187,7 +187,7 @@ struct I_NODE {
 				return false;
 		for (int i = 0; i < 16; i++) {
 			int j = dataBlocks[firstClassIndexAddress].indexBlock.indexs[i];
-			if (j != -1) {
+			if ( j!= -1) {
 				DataBlock datablock = dataBlocks[j];
 				if (datablock.directoryBlock.direcoryEntry[0].flag == 1) {
 					if (datablock.directoryBlock.direcoryEntry[3].fileName[0] == -51) {
@@ -200,7 +200,7 @@ struct I_NODE {
 		return true;
 	}
 
-	bool addChild(int childINodeNum, DataBlock dataBlocks[], BlockBitmap& blockBitMap, string path, bool isDir) {
+	bool addChild(int childINodeNum, DataBlock dataBlocks[], BlockBitmap &blockBitMap, string path, bool isDir){
 		//TODO 在这里添加关于增加子节点的代码
 		for (int i = 0; i < 2; i++) {
 			if (directAddress[i] == -1) {
@@ -246,10 +246,10 @@ struct I_NODE {
 			int i;
 			if (blockBitMap.getABlockNum(i)) {//找到一个空数据块来作为索引块
 				blockBitMap.blocks[i] = true;//更改对应状态位的值（false->true）
-				for (size_t m = 0; m < BLOCK_SIZE / 4; m++) {
-					dataBlocks[i].indexBlock.indexs[m] = -1;
+				for (size_t m = 0; m < BLOCK_SIZE/4; m++){
+					dataBlocks[i].indexBlock.indexs[m]=-1;
 				}
-
+				
 				int j;
 				if (blockBitMap.getABlockNum(j))//找到一个空数据块作为目录文件数据块
 				{
@@ -348,10 +348,10 @@ struct I_NODE {
 			for (size_t i = 0; i < 16; i++) {
 				int j;
 				if ((j = datablock.indexBlock.indexs[i]) != -1) {//拿到非空二级数据块
-					if (dataBlocks[j].directoryBlock.direcoryEntry[0].flag == 1) {//判断是否是目录文件数据块
-						for (int k = 0; k < 4; k++) {
+					if (dataBlocks[j].directoryBlock.direcoryEntry[0].flag == 1){//判断是否是目录文件数据块
+						for (int k = 0; k < 4; k++){
 							DirecoryEntry directEntry = dataBlocks[j].directoryBlock.direcoryEntry[k];
-							if (child._Equal(directEntry.fileName)) {
+							if (child._Equal(directEntry.fileName)){
 								inodeNum = directEntry.i_node_number;
 								if (directEntry.flag == 1)//目录
 								{
@@ -391,7 +391,7 @@ public:
 	Disc* disc;
 
 private:
-	int preview_inode;
+
 	int cwd_inode;
 	string cwd;
 public:
