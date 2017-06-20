@@ -153,7 +153,19 @@ bool Cmd::Mk(string dir, bool isDir) {
 }
 
 bool Cmd::Cd(string path) {
-	
+	if (path._Equal(".."))
+	{
+		if(iNodeManager->getParent(cwd_inode)) {
+			string temp = cwd;
+			int i = temp.find_last_of('/');
+			temp = string(temp,0, i);
+			i = temp.find_last_of('/');
+			temp = string(temp, 0, i+1);
+			cwd = temp;
+		}
+
+		return true;
+	}
 
 	if (cwd_inode == -1)//根目录
 	{
@@ -162,8 +174,11 @@ bool Cmd::Cd(string path) {
 			DirecoryEntry direcoryEntry = disc->rootDirectory.direcoryEntries[i];
 			if (path._Equal(direcoryEntry.fileName)) {//同名
 				if (direcoryEntry.flag == 1) {//目录
+					iNodeManager->addInode(cwd_inode);
 					cwd_inode = direcoryEntry.i_node_number;
+					
 					cwd = cwd + path + "/";
+
 					return true;
 				}
 				cout << path << "不是目录" << endl;
@@ -182,6 +197,7 @@ bool Cmd::Cd(string path) {
 	if (childINode != -1) {//不等于-1则说明存在
 		if (isDir)//true表示目录
 		{
+			iNodeManager->addInode(cwd_inode);
 			cwd_inode = childINode;
 			cwd = cwd + path + "/";
 			return true;
@@ -483,4 +499,26 @@ bool I_NODE::existChild(string child, DataBlock dataBlocks[], int& inodeNum){
 	}
 
 	return true;
+}
+
+bool InodeLinkManager::getParent(int &cwd_inode){
+	if (tail->val==-2) {
+		cout << "根目录，不可退回上级" << endl;
+		return false;
+	}
+	InodeLink *temp = head;
+	while (temp->next!=tail) {
+		temp = temp->next;
+	}
+	int parentInodeNum = tail->val;
+	tail = temp;
+	tail->next = nullptr;
+	cwd_inode = parentInodeNum;
+	return true;
+}
+
+int InodeLinkManager::addInode(int inode_number){
+	tail->next = new InodeLink(inode_number);
+	tail = tail->next;
+	return 0;
 }

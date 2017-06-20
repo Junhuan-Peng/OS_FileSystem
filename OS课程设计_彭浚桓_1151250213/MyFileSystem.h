@@ -3,6 +3,7 @@
 #include <string>
 #include <time.h>
 
+
 struct TxtBlock;
 using namespace std;
 
@@ -146,6 +147,30 @@ struct Disc {
 };
 
 
+class InodeLink{
+public:
+	int val;
+	InodeLink *next;
+	InodeLink(int i) :val(i){
+		next = nullptr;
+	}
+};
+
+class InodeLinkManager{
+public:
+	InodeLink *head;
+	InodeLink *tail;
+	InodeLinkManager(InodeLink *head_) :head(head_),tail(head_){
+		
+	}
+
+	bool getParent(int& cwd_inode);//获取到当前结点的父节点
+	int addInode(int inode_number);
+
+
+
+};
+
 class Cmd {
 public:
 
@@ -161,6 +186,8 @@ private:
 	int preview_inode;
 	int cwd_inode;
 	string cwd;
+	InodeLink *head;
+	InodeLinkManager *iNodeManager;
 public:
 	int getCwdINode() const {
 		return cwd_inode;
@@ -194,12 +221,14 @@ private:
 	bool ViewBlockMap();//显示当前block位示图状况
 };
 
-inline Cmd::Cmd() : disc(nullptr), cwd_inode(-1), preview_inode(-1){
+inline Cmd::Cmd() : disc(nullptr), cwd_inode(-1), preview_inode(-2){
 }
 
 
-inline Cmd::Cmd(Disc* disc): cwd_inode(-1),preview_inode(-1) {
+inline Cmd::Cmd(Disc* disc): cwd_inode(-1),preview_inode(-2) {
 	this->disc = disc;
+	head = new InodeLink(-1);
+	iNodeManager = new InodeLinkManager(head);
 }
 
 inline Cmd::~Cmd() {
@@ -208,6 +237,7 @@ inline Cmd::~Cmd() {
 inline Cmd* Cmd::getInstance(Disc* disc) {
 	if (instance == nullptr) {
 		instance = new Cmd(disc);
+		
 	}
 
 	return instance;
@@ -230,3 +260,4 @@ inline string* Cmd::split(string s, char c = ' ') {
 	}
 	return strings;
 }
+
