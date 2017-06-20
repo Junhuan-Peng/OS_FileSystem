@@ -11,7 +11,6 @@ using namespace std;
 //一些常量的定义
 const int BLOCK_SIZE = 64; //磁盘块的大小——64字节
 
-
 struct Disc;
 struct RootDirectory;
 struct I_NodeBitmap;
@@ -30,7 +29,7 @@ struct DirecoryEntry {
 	unsigned char flag;//0 表示一般文件，1 表示目录
 	int i_node_number;//i-node 编号——指向文件或者目录的索引节点
 	DirecoryEntry() {
-		fileName[0] = '#';
+		fileName[0] = '\0';
 		flag = -1;
 		i_node_number = -1;
 	}
@@ -147,26 +146,27 @@ struct Disc {
 };
 
 
-class InodeLink{
+class InodeLink {
 public:
 	int val;
-	InodeLink *next;
-	InodeLink(int i) :val(i){
+	InodeLink* next;
+
+	InodeLink(int i) : val(i) {
 		next = nullptr;
 	}
 };
 
-class InodeLinkManager{
+class InodeLinkManager {
 public:
-	InodeLink *head;
-	InodeLink *tail;
-	InodeLinkManager(InodeLink *head_) :head(head_),tail(head_){
-		
+	InodeLink* head;
+	InodeLink* tail;
+
+	InodeLinkManager(InodeLink* head_) : head(head_), tail(head_) {
+
 	}
 
 	bool getParent(int& cwd_inode);//获取到当前结点的父节点
 	int addInode(int inode_number);
-
 
 
 };
@@ -183,11 +183,10 @@ public:
 	Disc* disc;
 
 private:
-	int preview_inode;
 	int cwd_inode;
 	string cwd;
-	InodeLink *head;
-	InodeLinkManager *iNodeManager;
+	InodeLink* head;
+	InodeLinkManager* iNodeManager;
 public:
 	int getCwdINode() const {
 		return cwd_inode;
@@ -206,7 +205,7 @@ public:
 	}
 
 private:
-	Cmd();
+
 	static Cmd* instance;
 	bool Format();//初始化磁盘，划定结构
 	bool Mk(string dir, bool isDir);//创建目录(true)或文件（false）
@@ -217,15 +216,12 @@ private:
 	bool Copy(string orign_path, string goal_path);//复制文件到某一路径
 	bool Open(string filepath);//打开并编辑文件
 	bool Attrib(string file_path, string operation);//更改文件属性（是否为只读、是否被隐藏）
-	bool ViewINodeMap();//显示当前i-node位示图状况
+	bool ViewINodeMap() const;//显示当前i-node位示图状况
 	bool ViewBlockMap();//显示当前block位示图状况
 };
 
-inline Cmd::Cmd() : disc(nullptr), cwd_inode(-1), preview_inode(-2){
-}
 
-
-inline Cmd::Cmd(Disc* disc): cwd_inode(-1),preview_inode(-2) {
+inline Cmd::Cmd(Disc* disc): cwd_inode(-1) {
 	this->disc = disc;
 	head = new InodeLink(-1);
 	iNodeManager = new InodeLinkManager(head);
@@ -237,7 +233,7 @@ inline Cmd::~Cmd() {
 inline Cmd* Cmd::getInstance(Disc* disc) {
 	if (instance == nullptr) {
 		instance = new Cmd(disc);
-		
+
 	}
 
 	return instance;
@@ -260,4 +256,3 @@ inline string* Cmd::split(string s, char c = ' ') {
 	}
 	return strings;
 }
-
