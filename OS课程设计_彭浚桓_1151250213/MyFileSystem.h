@@ -50,6 +50,11 @@ struct IndexBlock {
 //文本文件数据块
 struct TxtBlock {
 	char txt[BLOCK_SIZE];
+	TxtBlock() {
+		for (size_t i = 0; i < BLOCK_SIZE; i++){
+			txt[i] = -1;
+		}
+	}
 };
 
 //目录文件数据块
@@ -62,6 +67,7 @@ union DataBlock {
 	TxtBlock txtBlock;//文本文件数据块
 	DirectoryFileBlock directoryBlock;//目录文件数据块
 	DataBlock() {
+
 	}
 };
 
@@ -133,7 +139,11 @@ struct I_NODE {
 	//判断当前i-node能否继续添加子i-node(子目录或者子文件）
 	bool isFull(DataBlock dataBlocks[]);
 	bool addChild(int childINodeNum, DataBlock dataBlocks[], BlockBitmap& blockBitMap, string path, bool isDir);
-	bool existChild(string child, DataBlock dataBlocks[], int& inodeNum);
+	bool existChild(string child, DataBlock dataBlocks[], int& inodeNum, DirecoryEntry **direcoryEntry_=new DirecoryEntry *);
+	bool clear(DataBlock datablocks[], BlockBitmap& blockBitMap);
+	void show(DataBlock datablocks[]);
+	void addText(const string& cs, DataBlock datablok[], BlockBitmap& bitmap);
+	string getTxt(DataBlock datablocks[]);
 };
 
 //磁盘
@@ -183,17 +193,17 @@ public:
 	Disc* disc;
 
 private:
-	int cwd_inode;
+	int cwd_inode_num;
 	string cwd;
 	InodeLink* head;
 	InodeLinkManager* iNodeManager;
 public:
 	int getCwdINode() const {
-		return cwd_inode;
+		return cwd_inode_num;
 	}
 
 	void setCwdINode(int cwd_inode) {
-		this->cwd_inode = cwd_inode;
+		this->cwd_inode_num = cwd_inode;
 	}
 
 	string getCwd() const {
@@ -211,7 +221,7 @@ private:
 	bool Mk(string dir, bool isDir);//创建目录(true)或文件（false）
 	bool Cd(string dir);//改变当前目录
 	bool DelFile(string filepath);//删除文件（注意只读属性）
-	bool DelDir(string dir);//删除目录
+	bool DelDir(string path, int& level);
 	bool Dir();//列文件目录
 	bool Copy(string orign_path, string goal_path);//复制文件到某一路径
 	bool Open(string filepath);//打开并编辑文件
@@ -221,7 +231,7 @@ private:
 };
 
 
-inline Cmd::Cmd(Disc* disc): cwd_inode(-1) {
+inline Cmd::Cmd(Disc* disc): cwd_inode_num(-1) {
 	this->disc = disc;
 	head = new InodeLink(-1);
 	iNodeManager = new InodeLinkManager(head);
