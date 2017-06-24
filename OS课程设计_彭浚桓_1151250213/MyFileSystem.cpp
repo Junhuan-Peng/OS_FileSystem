@@ -364,14 +364,14 @@ bool Cmd::DelDir(string path, int& level) {
 									DelDir(disc->dataBlocks[cwd_inode.directAddress[i]].directoryBlock.direcoryEntry[j].fileName, level);
 									level--;
 									Cd("..");
+									disc->i_nodeBitMap.i_node_bitmap[disc->dataBlocks[cwd_inode.directAddress[i]].directoryBlock.direcoryEntry[j].i_node_number] = false;
 									disc->dataBlocks[cwd_inode.directAddress[i]].directoryBlock.direcoryEntry[j].fileName[0] = '\0';
 									disc->dataBlocks[cwd_inode.directAddress[i]].directoryBlock.direcoryEntry[j].flag = -1;
 									disc->dataBlocks[cwd_inode.directAddress[i]].directoryBlock.direcoryEntry[j].i_node_number = -1;
 									return true;
 								}
-								else {
-									continue;
-								}
+								continue;
+								
 
 							}
 							else {
@@ -384,7 +384,7 @@ bool Cmd::DelDir(string path, int& level) {
 
 							DirecoryEntry* pDirecoryEntry;
 							int dir_inode;
-							cwd_inode.existChild(string(disc->dataBlocks[cwd_inode.directAddress[i]].directoryBlock.direcoryEntry[j].fileName), disc->dataBlocks, dir_inode, &pDirecoryEntry);
+							cwd_inode.existChild(path, disc->dataBlocks, dir_inode, &pDirecoryEntry);
 							disc->i_nodeBitMap.i_node_bitmap[dir_inode] = false;
 							pDirecoryEntry->fileName[0] = '\0';
 							pDirecoryEntry->i_node_number = -1;
@@ -414,6 +414,7 @@ bool Cmd::DelDir(string path, int& level) {
 										DelDir(disc->dataBlocks[x].directoryBlock.direcoryEntry[j].fileName, level);
 										level--;
 										Cd("..");
+										disc->i_nodeBitMap.i_node_bitmap[disc->dataBlocks[x].directoryBlock.direcoryEntry[j].i_node_number] = false;
 										disc->dataBlocks[x].directoryBlock.direcoryEntry[j].fileName[0] = '\0';
 										disc->dataBlocks[x].directoryBlock.direcoryEntry[j].flag = -1;
 										disc->dataBlocks[x].directoryBlock.direcoryEntry[j].i_node_number = -1;
