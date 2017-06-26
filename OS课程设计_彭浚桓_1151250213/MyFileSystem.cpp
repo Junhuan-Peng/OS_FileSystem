@@ -12,7 +12,7 @@ void usage();
 Cmd* Cmd::instance = nullptr;
 
 int main(int args, char* argv[]) {
-	Disc* disc = nullptr;
+	Disk* disc = nullptr;
 
 
 	cout << "输入 help 获取帮助" << ",输入 Exit 退出" << endl;
@@ -42,7 +42,7 @@ bool Cmd::parse(string cmd) {
 	if (strings[0]._Equal("Format")) {
 		Format();
 	}
-	else if (disc == nullptr) {
+	else if (disk == nullptr) {
 		cout << "硬盘未初始化！！！请输入 help 查看命令！！" << endl;
 		return false;
 	}
@@ -80,30 +80,30 @@ bool Cmd::parse(string cmd) {
 	else if (strings[0]._Equal("Viewblockmap")) {
 		ViewBlockMap();
 	}
-	else if (strings[0]._Equal("testDir")) {
-		//创建大量目录以检测程序是否正确
-		for (int i = 0; i < 70; i++) {
-			string temp;
-
-			stringstream ss;
-
-			ss << i;
-			ss >> temp;
-			Mk(temp, true);
-		}
-	}
-	else if (strings[0]._Equal("testFile")) {
-		//创建大量文件以检测程序是否正确
-		for (int i = 0; i < 70; i++) {
-			string temp;
-
-			stringstream ss;
-
-			ss << i;
-			ss >> temp;
-			Mk(temp, false);
-		}
-	}
+//	else if (strings[0]._Equal("testDir")) {
+//		//创建大量目录以检测程序是否正确
+//		for (int i = 0; i < 70; i++) {
+//			string temp;
+//
+//			stringstream ss;
+//
+//			ss << i;
+//			ss >> temp;
+//			Mk(temp, true);
+//		}
+//	}
+//	else if (strings[0]._Equal("testFile")) {
+//		//创建大量文件以检测程序是否正确
+//		for (int i = 0; i < 70; i++) {
+//			string temp;
+//
+//			stringstream ss;
+//
+//			ss << i;
+//			ss >> temp;
+//			Mk(temp, false);
+//		}
+//	}
 	else {
 		cout << strings[0] << "找不到命令！请重新输入" << endl;
 		usage();
@@ -113,13 +113,13 @@ bool Cmd::parse(string cmd) {
 
 bool Cmd::Format() {
 	cout << "正在初始化硬盘……请等待" << endl;
-	disc = new Disc;
+	disk = new Disk;
 	for (int i = 0; i < 1024; i++) {
-		disc->blockBitMap.blocks[i] = false;
+		disk->blockBitMap.blocks[i] = false;
 		if (i < 512)
-			disc->i_nodeBitMap.i_node_bitmap[i % 512] = false;
+			disk->i_nodeBitMap.i_node_bitmap[i % 512] = false;
 	}
-	if (disc->dataBlocks != nullptr) {
+	if (disk->dataBlocks != nullptr) {
 		cout << "初始化成功……" << endl;
 
 		head = new InodeLink(-1);
@@ -141,8 +141,8 @@ bool Cmd::Mk(string dir, bool isDir) {
 	}
 	int i_node_num;
 	if (cwd_inode_num != -1) {//非根目录
-		I_NODE* parentINode = &(disc->i_node_s[cwd_inode_num]);
-		if (parentINode->isFull(disc->dataBlocks)) {
+		I_NODE* parentINode = &(disk->i_node_s[cwd_inode_num]);
+		if (parentINode->isFull(disk->dataBlocks)) {
 			cout << "该目录下已满，不能再添加任何" << (isDir ? "目录" : "文件") << endl;
 			return false;
 		}
@@ -151,7 +151,7 @@ bool Cmd::Mk(string dir, bool isDir) {
 		if (isDir)//如果是一个目录，则判断是否有同名目录存在
 		{
 			int temp;
-			if (parentINode->existChild(dir, disc->dataBlocks, temp)) {//为真则表示是一个目录（可能不存在）
+			if (parentINode->existChild(dir, disk->dataBlocks, temp)) {//为真则表示是一个目录（可能不存在）
 				if (temp != -1) {//存在
 					cout << "同名" << (isDir ? "目录" : "文件") << "已经存在!!!" << endl;
 					return false;
@@ -161,7 +161,7 @@ bool Cmd::Mk(string dir, bool isDir) {
 		}
 		else {//如果是创建文件，则判断是否有同名文件存在
 			int temp;
-			if (!parentINode->existChild(dir, disc->dataBlocks, temp)) {//为false则表示是一个目录
+			if (!parentINode->existChild(dir, disk->dataBlocks, temp)) {//为false则表示是一个目录
 				if (temp != -1) {//存在
 					cout << "同名" << (isDir ? "目录" : "文件") << "已经存在!!!" << endl;
 					return false;
@@ -170,20 +170,20 @@ bool Cmd::Mk(string dir, bool isDir) {
 		}
 
 
-		if (disc->i_nodeBitMap.getAnINodeNum(i_node_num)) {//找到空i-node
-			disc->i_nodeBitMap.i_node_bitmap[i_node_num] = true;//更改对应i-node的状态
-			disc->i_node_s[i_node_num].init();//初始化i-node——主要是对时间的更改
-			parentINode->addChild(i_node_num, disc->dataBlocks, disc->blockBitMap, dir, isDir);//完成父节点到子节点的连接,true--目录
+		if (disk->i_nodeBitMap.getAnINodeNum(i_node_num)) {//找到空i-node
+			disk->i_nodeBitMap.i_node_bitmap[i_node_num] = true;//更改对应i-node的状态
+			disk->i_node_s[i_node_num].init();//初始化i-node——主要是对时间的更改
+			parentINode->addChild(i_node_num, disk->dataBlocks, disk->blockBitMap, dir, isDir);//完成父节点到子节点的连接,true--目录
 			return true;
 		}
 		cout << "不存在空余i-node，无法创建" << (isDir ? "目录" : "文件") << "！";
-		disc->i_nodeBitMap.i_node_bitmap[i_node_num] = false;//不能创建相应的数据，i-node对应位应该置为false
+		disk->i_nodeBitMap.i_node_bitmap[i_node_num] = false;//不能创建相应的数据，i-node对应位应该置为false
 
 		return false;
 	}
 	//根节点
 	//判断是否存在同名
-	RootDirectory root = disc->rootDirectory;
+	RootDirectory root = disk->rootDirectory;
 	for (size_t temp = 0; temp < 4; temp++) {
 		if (dir._Equal(root.direcoryEntries[temp].fileName)) {
 			cout << "同名" << (isDir ? "目录" : "文件") << "已经存在!!!" << endl;
@@ -195,10 +195,10 @@ bool Cmd::Mk(string dir, bool isDir) {
 	{
 
 
-		if (disc->i_nodeBitMap.getAnINodeNum(i_node_num)) {
-			disc->i_nodeBitMap.i_node_bitmap[i_node_num] = true;
-			disc->i_node_s[i_node_num].init();
-			disc->rootDirectory.direcoryEntries[j].init(dir._Myptr(), isDir, i_node_num);
+		if (disk->i_nodeBitMap.getAnINodeNum(i_node_num)) {
+			disk->i_nodeBitMap.i_node_bitmap[i_node_num] = true;
+			disk->i_node_s[i_node_num].init();
+			disk->rootDirectory.direcoryEntries[j].init(dir._Myptr(), isDir, i_node_num);
 			return true;
 		}
 
@@ -235,7 +235,7 @@ bool Cmd::Cd(string path) {
 	{
 
 		for (size_t i = 0; i < 4; i++) {
-			DirecoryEntry direcoryEntry = disc->rootDirectory.direcoryEntries[i];
+			DirectoryEntry direcoryEntry = disk->rootDirectory.direcoryEntries[i];
 			if (path._Equal(direcoryEntry.fileName)) {//同名
 				if (direcoryEntry.flag == 1) {//目录
 
@@ -256,8 +256,8 @@ bool Cmd::Cd(string path) {
 
 	int childINode;
 	bool isDir;
-	I_NODE parentINode = disc->i_node_s[cwd_inode_num];
-	isDir = parentINode.existChild(path, disc->dataBlocks, childINode);
+	I_NODE parentINode = disk->i_node_s[cwd_inode_num];
+	isDir = parentINode.existChild(path, disk->dataBlocks, childINode);
 	if (childINode != -1) {//不等于-1则说明存在
 		if (isDir)//true表示目录
 		{
@@ -278,15 +278,15 @@ bool Cmd::DelFile(string path) {
 	if (cwd_inode_num == -1) {
 
 		for (size_t i = 0; i < 4; i++) {
-			if (path._Equal(disc->rootDirectory.direcoryEntries[i].fileName)) {
-				if (disc->rootDirectory.direcoryEntries[i].flag == 0)//如果是文件
+			if (path._Equal(disk->rootDirectory.direcoryEntries[i].fileName)) {
+				if (disk->rootDirectory.direcoryEntries[i].flag == 0)//如果是文件
 				{
 
-					disc->i_node_s[disc->rootDirectory.direcoryEntries[i].i_node_number].clear(disc->dataBlocks, disc->blockBitMap);
-					disc->i_nodeBitMap.i_node_bitmap[disc->rootDirectory.direcoryEntries[i].i_node_number] = false;
-					disc->rootDirectory.direcoryEntries[i].fileName[0] = '\0';
-					disc->rootDirectory.direcoryEntries[i].flag = -1;
-					disc->rootDirectory.direcoryEntries[i].i_node_number = -1;
+					disk->i_node_s[disk->rootDirectory.direcoryEntries[i].i_node_number].clear(disk->dataBlocks, disk->blockBitMap);
+					disk->i_nodeBitMap.i_node_bitmap[disk->rootDirectory.direcoryEntries[i].i_node_number] = false;
+					disk->rootDirectory.direcoryEntries[i].fileName[0] = '\0';
+					disk->rootDirectory.direcoryEntries[i].flag = -1;
+					disk->rootDirectory.direcoryEntries[i].i_node_number = -1;
 					return true;
 				}
 			}
@@ -296,13 +296,13 @@ bool Cmd::DelFile(string path) {
 	}
 
 
-	I_NODE parent_Inode = disc->i_node_s[cwd_inode_num];
+	I_NODE parent_Inode = disk->i_node_s[cwd_inode_num];
 	int child_Inode_num;
-	DirecoryEntry* pdircoryEntry = nullptr;
-	if (!parent_Inode.existChild(path, disc->dataBlocks, child_Inode_num, &pdircoryEntry)) {//如果是文件则返回false
+	DirectoryEntry* pdircoryEntry = nullptr;
+	if (!parent_Inode.existChild(path, disk->dataBlocks, child_Inode_num, &pdircoryEntry)) {//如果是文件则返回false
 		if (child_Inode_num != -1) {
-			disc->i_node_s[child_Inode_num].clear(disc->dataBlocks, disc->blockBitMap);//删除文本，同时将对应的数据块bitmap置为false
-			disc->i_nodeBitMap.i_node_bitmap[child_Inode_num] = false;
+			disk->i_node_s[child_Inode_num].clear(disk->dataBlocks, disk->blockBitMap);//删除文本，同时将对应的数据块bitmap置为false
+			disk->i_nodeBitMap.i_node_bitmap[child_Inode_num] = false;
 			pdircoryEntry->i_node_number = -1;
 			pdircoryEntry->flag = -1;
 			pdircoryEntry->fileName[0] = '\0';
@@ -318,46 +318,51 @@ bool Cmd::DelFile(string path) {
 }
 
 
-bool Cmd::DelDir(string path, int& level){
+bool Cmd::DelDir(string path, int& level) {
 
 	//递归删除目录，level记录层级
 
-	if (cwd_inode_num == -1){
-		for (int i = 0;i<4;i++)
-		{
+	if (cwd_inode_num == -1) {
+		for (int i = 0; i < 4; i++) {
 			//同名，且是文件夹
-			if (path._Equal(disc->rootDirectory.direcoryEntries[i].fileName)&&disc->rootDirectory.direcoryEntries[i].flag==1)
-			{
-				Cd(path);
-				level++;
-				DelDir(disc->rootDirectory.direcoryEntries[i].fileName,level);
-				Cd("..");
-				level--;
-				disc->rootDirectory.direcoryEntries[i].fileName[0] = '\0';
-				disc->i_nodeBitMap.i_node_bitmap[disc->rootDirectory.direcoryEntries[i].i_node_number] = false;
-				disc->rootDirectory.direcoryEntries[i].flag = -1;
-				
-				disc->i_node_s[disc->rootDirectory.direcoryEntries[i].i_node_number].directAddress[0] = -1;
-				disc->i_node_s[disc->rootDirectory.direcoryEntries[i].i_node_number].directAddress[1] = -1;
-				disc->i_node_s[disc->rootDirectory.direcoryEntries[i].i_node_number].firstClassIndexAddress = -1;
-				disc->rootDirectory.direcoryEntries[i].i_node_number = -1;
-				return true;
-			}
-		}
-	} else{
-		if (level==0)
-		{
-			I_NODE parent = disc->i_node_s[cwd_inode_num];
-			int child_inode;
-			DirecoryEntry *pDirectoryEntry;
-			if (parent.existChild(path, disc->dataBlocks, child_inode,&pDirectoryEntry)){
-				//为真可能是不存在，可能是找到的是文件夹
-				if (child_inode==-1)
-				{
-					cout << path << "不存在"<<endl;
+			if (path._Equal(disk->rootDirectory.direcoryEntries[i].fileName) && disk->rootDirectory.direcoryEntries[i].flag == 1) {
+				if (disk->i_node_s[disk->rootDirectory.direcoryEntries[i].i_node_number].isReadOnly == 0){
+					Cd(path);
+					level++;
+					DelDir(disk->rootDirectory.direcoryEntries[i].fileName, level);
+					Cd("..");
+					level--;
+					disk->rootDirectory.direcoryEntries[i].fileName[0] = '\0';
+					disk->i_nodeBitMap.i_node_bitmap[disk->rootDirectory.direcoryEntries[i].i_node_number] = false;
+					disk->rootDirectory.direcoryEntries[i].flag = -1;
+
+					disk->i_node_s[disk->rootDirectory.direcoryEntries[i].i_node_number].directAddress[0] = -1;
+					disk->i_node_s[disk->rootDirectory.direcoryEntries[i].i_node_number].directAddress[1] = -1;
+					disk->i_node_s[disk->rootDirectory.direcoryEntries[i].i_node_number].firstClassIndexAddress = -1;
+					disk->rootDirectory.direcoryEntries[i].i_node_number = -1;
 					return true;
 				} else{
-					//找到的是文件夹
+					cout << "只读文件夹，不可删除" << endl;
+				
+				}
+			}
+		}
+	}
+	else {
+		if (level == 0) {
+			I_NODE parent = disk->i_node_s[cwd_inode_num];
+			int child_inode;
+			DirectoryEntry* pDirectoryEntry;
+			if (parent.existChild(path, disk->dataBlocks, child_inode, &pDirectoryEntry)) {
+				//为真可能是不存在，可能是找到的是文件夹
+				if (child_inode == -1) {
+					cout << path << "不存在" << endl;
+					return true;
+				}
+				//找到的是文件夹
+				if (disk->i_node_s[pDirectoryEntry->i_node_number].isReadOnly == 0){
+
+
 					Cd(path);
 					level++;
 					DelDir(path, level);
@@ -366,98 +371,98 @@ bool Cmd::DelDir(string path, int& level){
 
 					pDirectoryEntry->fileName[0] = '\0';
 					pDirectoryEntry->flag = -1;
-					disc->i_nodeBitMap.i_node_bitmap[pDirectoryEntry->i_node_number] = false;
+					disk->i_nodeBitMap.i_node_bitmap[pDirectoryEntry->i_node_number] = false;
 
-					disc->i_node_s[pDirectoryEntry->i_node_number].directAddress[0] = -1;
-					disc->i_node_s[pDirectoryEntry->i_node_number].directAddress[1] = -1;
-					disc->i_node_s[pDirectoryEntry->i_node_number].firstClassIndexAddress = -1;
-					
+					disk->i_node_s[pDirectoryEntry->i_node_number].directAddress[0] = -1;
+					disk->i_node_s[pDirectoryEntry->i_node_number].directAddress[1] = -1;
+					disk->i_node_s[pDirectoryEntry->i_node_number].firstClassIndexAddress = -1;
+
 
 					pDirectoryEntry->i_node_number = -1;
 					return true;
-
 				}
-			} else{
-				cout << path << "不存在" << endl;
-				return true;
+				else {
+					cout << "只读文件夹，不可删除" << endl;
+				}
 			}
-		} else{//level!=0,则删除cwd_node_num下所有目录文件
+			cout << path << "不存在" << endl;
+			return true;
+		}
+		//level!=0,则删除cwd_node_num下所有目录文件
 
-			I_NODE cwd_inode = disc->i_node_s[cwd_inode_num];
+		I_NODE cwd_inode = disk->i_node_s[cwd_inode_num];
 
-			for (int i = 0;i<2;i++)
-			{
-				if (cwd_inode.directAddress[i] != -1){
-					DataBlock temp = disc->dataBlocks[cwd_inode.directAddress[i]];
-					for (int j = 0; j < 4; j++){
-						if (temp.directoryBlock.direcoryEntry[j].flag == 1){//目录
+		for (int i = 0; i < 2; i++) {
+			if (cwd_inode.directAddress[i] != -1) {
+				DataBlock temp = disk->dataBlocks[cwd_inode.directAddress[i]];
+				for (int j = 0; j < 4; j++) {
+					if (temp.directoryBlock.direcoryEntry[j].flag == 1) {//目录
+						Cd(temp.directoryBlock.direcoryEntry[j].fileName);
+						level++;
+						DelDir(temp.directoryBlock.direcoryEntry[j].fileName, level);
+						Cd("..");
+						level--;
+
+						disk->dataBlocks[cwd_inode.directAddress[i]].directoryBlock.direcoryEntry[j].fileName[0] = '\0';
+						disk->dataBlocks[cwd_inode.directAddress[i]].directoryBlock.direcoryEntry[j].flag = -1;
+						disk->i_nodeBitMap.i_node_bitmap[disk->dataBlocks[cwd_inode.directAddress[i]].directoryBlock.direcoryEntry[j].i_node_number] = false;
+						disk->dataBlocks[cwd_inode.directAddress[i]].directoryBlock.direcoryEntry[j].i_node_number = -1;
+
+					}
+					else if (temp.directoryBlock.direcoryEntry[j].flag == 0)//文件
+					{
+						DelFile(temp.directoryBlock.direcoryEntry[j].fileName);
+						disk->dataBlocks[cwd_inode.directAddress[i]].directoryBlock.direcoryEntry[j].fileName[0] = '\0';
+						disk->dataBlocks[cwd_inode.directAddress[i]].directoryBlock.direcoryEntry[j].flag = -1;
+						disk->i_nodeBitMap.i_node_bitmap[disk->dataBlocks[cwd_inode.directAddress[i]].directoryBlock.direcoryEntry[j].i_node_number] = false;
+						disk->dataBlocks[cwd_inode.directAddress[i]].directoryBlock.direcoryEntry[j].i_node_number = -1;
+
+					}
+				}
+				disk->blockBitMap.blocks[cwd_inode.directAddress[i]] = false;
+
+			}
+		}
+		int x;
+		if ((x = cwd_inode.firstClassIndexAddress) != -1) {
+			IndexBlock indexblock = disk->dataBlocks[x].indexBlock;
+			for (size_t i = 0; i < 16; i++) {
+				int y;
+				if ((y = indexblock.indexs[i]) != -1) {
+					DataBlock temp = disk->dataBlocks[y];
+					for (int j = 0; j < 4; j++) {
+						if (temp.directoryBlock.direcoryEntry[j].flag == 1) {//目录
 							Cd(temp.directoryBlock.direcoryEntry[j].fileName);
 							level++;
 							DelDir(temp.directoryBlock.direcoryEntry[j].fileName, level);
 							Cd("..");
 							level--;
 
-							disc->dataBlocks[cwd_inode.directAddress[i]].directoryBlock.direcoryEntry[j].fileName[0] = '\0';
-							disc->dataBlocks[cwd_inode.directAddress[i]].directoryBlock.direcoryEntry[j].flag = -1;
-							disc->i_nodeBitMap.i_node_bitmap[disc->dataBlocks[cwd_inode.directAddress[i]].directoryBlock.direcoryEntry[j].i_node_number] = false;
-							disc->dataBlocks[cwd_inode.directAddress[i]].directoryBlock.direcoryEntry[j].i_node_number = -1;
+							disk->dataBlocks[y].directoryBlock.direcoryEntry[j].fileName[0] = '\0';
+							disk->dataBlocks[y].directoryBlock.direcoryEntry[j].flag = -1;
+							disk->i_nodeBitMap.i_node_bitmap[disk->dataBlocks[y].directoryBlock.direcoryEntry[j].i_node_number] = false;
+							disk->dataBlocks[y].directoryBlock.direcoryEntry[j].i_node_number = -1;
 
-						} else if (temp.directoryBlock.direcoryEntry[j].flag == 0)//文件
+
+						}
+						else if (temp.directoryBlock.direcoryEntry[j].flag == 0)//文件
 						{
 							DelFile(temp.directoryBlock.direcoryEntry[j].fileName);
-							disc->dataBlocks[cwd_inode.directAddress[i]].directoryBlock.direcoryEntry[j].fileName[0] = '\0';
-							disc->dataBlocks[cwd_inode.directAddress[i]].directoryBlock.direcoryEntry[j].flag = -1;
-							disc->i_nodeBitMap.i_node_bitmap[disc->dataBlocks[cwd_inode.directAddress[i]].directoryBlock.direcoryEntry[j].i_node_number] = false;
-							disc->dataBlocks[cwd_inode.directAddress[i]].directoryBlock.direcoryEntry[j].i_node_number = -1;
+							disk->dataBlocks[y].directoryBlock.direcoryEntry[j].fileName[0] = '\0';
+							disk->dataBlocks[y].directoryBlock.direcoryEntry[j].flag = -1;
+							disk->i_nodeBitMap.i_node_bitmap[disk->dataBlocks[y].directoryBlock.direcoryEntry[j].i_node_number] = false;
+							disk->dataBlocks[y].directoryBlock.direcoryEntry[j].i_node_number = -1;
 
 						}
 					}
-					disc->blockBitMap.blocks[cwd_inode.directAddress[i]] = false;
-					
 				}
+				disk->blockBitMap.blocks[y] = false;
 			}
-			int x;
-			if ((x= cwd_inode.firstClassIndexAddress)!=-1)
-			{
-				IndexBlock indexblock = disc->dataBlocks[x].indexBlock;
-				for (size_t i = 0; i < 16; i++){
-					int y;
-					if ((y=indexblock.indexs[i])!=-1){
-						DataBlock temp = disc->dataBlocks[y];
-						for (int j = 0; j < 4; j++){
-							if (temp.directoryBlock.direcoryEntry[j].flag == 1){//目录
-								Cd(temp.directoryBlock.direcoryEntry[j].fileName);
-								level++;
-								DelDir(temp.directoryBlock.direcoryEntry[j].fileName, level);
-								Cd("..");
-								level--;
+			disk->blockBitMap.blocks[cwd_inode.firstClassIndexAddress] = false;
 
-								disc->dataBlocks[y].directoryBlock.direcoryEntry[j].fileName[0] = '\0';
-								disc->dataBlocks[y].directoryBlock.direcoryEntry[j].flag = -1;
-								disc->i_nodeBitMap.i_node_bitmap[disc->dataBlocks[y].directoryBlock.direcoryEntry[j].i_node_number] = false;
-								disc->dataBlocks[y].directoryBlock.direcoryEntry[j].i_node_number = -1;
-
-
-							} else if (temp.directoryBlock.direcoryEntry[j].flag == 0)//文件
-							{
-								DelFile(temp.directoryBlock.direcoryEntry[j].fileName);
-								disc->dataBlocks[y].directoryBlock.direcoryEntry[j].fileName[0] = '\0';
-								disc->dataBlocks[y].directoryBlock.direcoryEntry[j].flag = -1;
-								disc->i_nodeBitMap.i_node_bitmap[disc->dataBlocks[y].directoryBlock.direcoryEntry[j].i_node_number] = false;
-								disc->dataBlocks[y].directoryBlock.direcoryEntry[j].i_node_number = -1;
-
-							}
-						}
-					}
-					disc->blockBitMap.blocks[y] = false;
-				}
-				disc->blockBitMap.blocks[cwd_inode.firstClassIndexAddress] = false;
-
-			}
 		}
 	}
-
-
+	return false;
 }
 
 
@@ -466,10 +471,10 @@ bool Cmd::Dir() {
 	int i;
 	if (cwd_inode_num == -1) {//根目录
 		for (i = 0; i < 4; i++) {
-			if (disc->rootDirectory.direcoryEntries[i].fileName[0] > 0) {
-				DirecoryEntry temp = disc->rootDirectory.direcoryEntries[i];
+			if (disk->rootDirectory.direcoryEntries[i].fileName[0] > 0) {
+				DirectoryEntry temp = disk->rootDirectory.direcoryEntries[i];
 				if (temp.i_node_number > -1) {
-					I_NODE child = disc->i_node_s[temp.i_node_number];
+					I_NODE child = disk->i_node_s[temp.i_node_number];
 					if (!child.isHide) {
 						cout << temp.fileName << "\t" << ((temp.flag == 1) ? "目录" : "文件") << "\t" << ((int)child.hour) << "：" << ((int)child.minutes) << endl;
 					}
@@ -478,19 +483,19 @@ bool Cmd::Dir() {
 		}
 		return true;
 	}
-	I_NODE inode = disc->i_node_s[cwd_inode_num];
+	I_NODE inode = disk->i_node_s[cwd_inode_num];
 
 	for (int z = 0; z < 2; z++) {
 
 
 		if ((i = inode.directAddress[z]) != -1)//一级数据块不空
 		{
-			DataBlock dataBlock = disc->dataBlocks[i];//拿到数据块
+			DataBlock dataBlock = disk->dataBlocks[i];//拿到数据块
 			if (dataBlock.directoryBlock.direcoryEntry[z].flag == 1 || dataBlock.directoryBlock.direcoryEntry[0].flag == 0) {//如果是目录文件数据块
 				for (size_t j = 0; j < BLOCK_SIZE / 16; j++) {
-					DirecoryEntry temp = dataBlock.directoryBlock.direcoryEntry[j];
+					DirectoryEntry temp = dataBlock.directoryBlock.direcoryEntry[j];
 					if (temp.i_node_number > -1) {
-						I_NODE child = disc->i_node_s[temp.i_node_number];
+						I_NODE child = disk->i_node_s[temp.i_node_number];
 						if (child.isHide == 0) {
 							cout << temp.fileName << "\t" << ((temp.flag == 1) ? "目录" : "文件") << "\t" << ((int)child.hour) << "：" << ((int)child.minutes) << endl;
 						}
@@ -502,18 +507,18 @@ bool Cmd::Dir() {
 
 	if ((i = inode.firstClassIndexAddress) != -1)//一级索引块不为空
 	{
-		IndexBlock indexBlock = disc->dataBlocks[i].indexBlock;//拿到索引块
+		IndexBlock indexBlock = disk->dataBlocks[i].indexBlock;//拿到索引块
 		for (size_t z = 0; z < 16; z++) {
 			if (indexBlock.indexs[z] == -1)//二级数据块空
 			{
 				break;
 			}
-			DataBlock dataBlock = disc->dataBlocks[indexBlock.indexs[z]];//拿到二级数据块
+			DataBlock dataBlock = disk->dataBlocks[indexBlock.indexs[z]];//拿到二级数据块
 			if (dataBlock.directoryBlock.direcoryEntry[0].flag == 1 || dataBlock.directoryBlock.direcoryEntry[0].flag == 0) {//如果是目录文件数据块
 				for (size_t j = 0; j < BLOCK_SIZE / 16; j++) {
-					DirecoryEntry temp = dataBlock.directoryBlock.direcoryEntry[j];
+					DirectoryEntry temp = dataBlock.directoryBlock.direcoryEntry[j];
 					if (temp.fileName[0] > 0) {
-						I_NODE child = disc->i_node_s[temp.i_node_number];
+						I_NODE child = disk->i_node_s[temp.i_node_number];
 						if (child.isHide == 0) {
 							cout << temp.fileName << "\t" << ((temp.flag == 1) ? "目录" : "文件") << "\t" << ((int)child.hour) << "：" << ((int)child.minutes) << endl;
 						}
@@ -533,18 +538,16 @@ bool Cmd::Copy(string origin_path, string goal_path) {
 	if (origin_path._Equal("") || goal_path._Equal("")) {
 		cout << "参数不齐！" << endl;
 		return false;
-
 	}
-
 
 	if (cwd_inode_num == -1) {
 		int child_goal = -1, child_origin = -1;
 		for (size_t i = 0; i < 4; i++) {
-			if (origin_path._Equal(disc->rootDirectory.direcoryEntries[i].fileName)) {
-				child_origin = disc->rootDirectory.direcoryEntries[i].i_node_number;
+			if (origin_path._Equal(disk->rootDirectory.direcoryEntries[i].fileName)) {
+				child_origin = disk->rootDirectory.direcoryEntries[i].i_node_number;
 			}
-			if (goal_path._Equal(disc->rootDirectory.direcoryEntries[i].fileName)) {
-				child_goal = disc->rootDirectory.direcoryEntries[i].i_node_number;
+			if (goal_path._Equal(disk->rootDirectory.direcoryEntries[i].fileName)) {
+				child_goal = disk->rootDirectory.direcoryEntries[i].i_node_number;
 			}
 
 		}
@@ -552,37 +555,37 @@ bool Cmd::Copy(string origin_path, string goal_path) {
 			cout << "源文件不存在！" << endl;
 			return false;
 		}
-		I_NODE origin = disc->i_node_s[child_origin];
+		I_NODE origin = disk->i_node_s[child_origin];
 
 		if (child_goal == -1) {
 			Mk(goal_path, false);
 
 			for (size_t i = 0; i < 4; i++) {
-				if (goal_path._Equal(disc->rootDirectory.direcoryEntries[i].fileName)) {
-					child_goal = disc->rootDirectory.direcoryEntries[i].i_node_number;
+				if (goal_path._Equal(disk->rootDirectory.direcoryEntries[i].fileName)) {
+					child_goal = disk->rootDirectory.direcoryEntries[i].i_node_number;
 					break;
 				}
 			}
 		}
 
-		disc->i_node_s[child_goal].addText(origin.getTxt(disc->dataBlocks), disc->dataBlocks, disc->blockBitMap);
+		disk->i_node_s[child_goal].addText(origin.getTxt(disk->dataBlocks), disk->dataBlocks, disk->blockBitMap);
 		return true;
 	}
 	//非根目录
-	I_NODE parent = disc->i_node_s[cwd_inode_num];
+	I_NODE parent = disk->i_node_s[cwd_inode_num];
 	//源文件必须存在
 	int child_goal, child_origin;
-	if (!parent.existChild(origin_path, disc->dataBlocks, child_origin)) {
+	if (!parent.existChild(origin_path, disk->dataBlocks, child_origin)) {
 		if (child_origin != -1) {
-			if (parent.existChild(goal_path, disc->dataBlocks, child_goal) && child_goal == -1) {
+			if (!parent.existChild(goal_path, disk->dataBlocks, child_goal) && child_goal == -1) {
 				Mk(goal_path, false);
-				parent.existChild(goal_path, disc->dataBlocks, child_goal);
+				parent.existChild(goal_path, disk->dataBlocks, child_goal);
 			}
-			
-				I_NODE origin = disc->i_node_s[child_origin];
-				disc->i_node_s[child_goal].addText(origin.getTxt(disc->dataBlocks), disc->dataBlocks, disc->blockBitMap);
-				return true;
-			
+
+			I_NODE origin = disk->i_node_s[child_origin];
+			disk->i_node_s[child_goal].addText(origin.getTxt(disk->dataBlocks), disk->dataBlocks, disk->blockBitMap);
+			return true;
+
 		}
 
 	}
@@ -600,11 +603,11 @@ bool Cmd::Open(string cmd) {
 
 	if (cwd_inode_num == -1) {
 		for (size_t i = 0; i < 4; i++) {
-			if (cmd._Equal(disc->rootDirectory.direcoryEntries[i].fileName) && disc->rootDirectory.direcoryEntries[i].flag == 0) {
-				if (disc->i_node_s[disc->rootDirectory.direcoryEntries[i].i_node_number].isReadOnly == 0)//可编辑
+			if (cmd._Equal(disk->rootDirectory.direcoryEntries[i].fileName) && disk->rootDirectory.direcoryEntries[i].flag == 0) {
+				if (disk->i_node_s[disk->rootDirectory.direcoryEntries[i].i_node_number].isReadOnly == 0)//可编辑
 				{
 					cout << endl;
-					disc->i_node_s[disc->rootDirectory.direcoryEntries[i].i_node_number].show(disc->dataBlocks);
+					disk->i_node_s[disk->rootDirectory.direcoryEntries[i].i_node_number].show(disk->dataBlocks);
 					cout << endl << "是否编辑？(Y/N)" << endl;
 					if (getchar() == 'Y') {
 
@@ -616,13 +619,13 @@ bool Cmd::Open(string cmd) {
 						temp[content.length()] = '\0';
 						content = string(temp);
 						getchar();
-						disc->i_node_s[disc->rootDirectory.direcoryEntries[i].i_node_number].addText(content, disc->dataBlocks, disc->blockBitMap);
+						disk->i_node_s[disk->rootDirectory.direcoryEntries[i].i_node_number].addText(content, disk->dataBlocks, disk->blockBitMap);
 						return true;
 					}
 					getchar();
 				}
 				else {
-					disc->i_node_s[disc->rootDirectory.direcoryEntries[i].i_node_number].show(disc->dataBlocks);
+					disk->i_node_s[disk->rootDirectory.direcoryEntries[i].i_node_number].show(disk->dataBlocks);
 				}
 			}
 		}
@@ -631,14 +634,14 @@ bool Cmd::Open(string cmd) {
 	}
 
 
-	I_NODE parent = disc->i_node_s[cwd_inode_num];
+	I_NODE parent = disk->i_node_s[cwd_inode_num];
 	int child_inode;
-	if (!parent.existChild(cmd, disc->dataBlocks, child_inode)) {
+	if (!parent.existChild(cmd, disk->dataBlocks, child_inode)) {
 		if (child_inode != -1) {
-			if (disc->i_node_s[child_inode].isReadOnly == 0)//可编辑
+			if (disk->i_node_s[child_inode].isReadOnly == 0)//可编辑
 			{
 				cout << endl;
-				disc->i_node_s[child_inode].show(disc->dataBlocks);
+				disk->i_node_s[child_inode].show(disk->dataBlocks);
 				cout << endl << "是否编辑？(Y/N)" << endl;
 				if (getchar() == 'Y') {
 					getchar();
@@ -650,13 +653,13 @@ bool Cmd::Open(string cmd) {
 					temp[content.length()] = '\0';
 					content = string(temp);
 					getchar();
-					disc->i_node_s[child_inode].addText(content, disc->dataBlocks, disc->blockBitMap);
+					disk->i_node_s[child_inode].addText(content, disk->dataBlocks, disk->blockBitMap);
 					return true;
 				}
 				getchar();
 			}
 			else {
-				disc->i_node_s[child_inode].show(disc->dataBlocks);
+				disk->i_node_s[child_inode].show(disk->dataBlocks);
 			}
 		}
 	}
@@ -699,10 +702,10 @@ bool Cmd::Attrib(string path, string operation) {
 	{
 
 		for (size_t i = 0; i < 4; i++) {
-			DirecoryEntry direcoryEntry = disc->rootDirectory.direcoryEntries[i];
+			DirectoryEntry direcoryEntry = disk->rootDirectory.direcoryEntries[i];
 			if (path._Equal(direcoryEntry.fileName)) {//同名
-				disc->i_node_s[direcoryEntry.i_node_number].isReadOnly = operation_result[1];
-				disc->i_node_s[direcoryEntry.i_node_number].isHide = operation_result[0];
+				disk->i_node_s[direcoryEntry.i_node_number].isReadOnly = operation_result[1];
+				disk->i_node_s[direcoryEntry.i_node_number].isHide = operation_result[0];
 				return true;
 			}
 		}
@@ -712,11 +715,11 @@ bool Cmd::Attrib(string path, string operation) {
 
 	int childINode;
 
-	I_NODE parentINode = disc->i_node_s[cwd_inode_num];
-	parentINode.existChild(path, disc->dataBlocks, childINode);
+	I_NODE parentINode = disk->i_node_s[cwd_inode_num];
+	parentINode.existChild(path, disk->dataBlocks, childINode);
 	if (childINode != -1) {//不等于-1则说明存在
-		disc->i_node_s[childINode].isReadOnly = operation_result[1];
-		disc->i_node_s[childINode].isHide = operation_result[0];
+		disk->i_node_s[childINode].isReadOnly = operation_result[1];
+		disk->i_node_s[childINode].isHide = operation_result[0];
 		return true;
 	}
 	cout << path << "不存在" << endl;
@@ -725,7 +728,7 @@ bool Cmd::Attrib(string path, string operation) {
 
 bool Cmd::ViewINodeMap() const {
 	//共计512
-	I_NodeBitmap bitmap = disc->i_nodeBitMap;
+	I_NodeBitmap bitmap = disk->i_nodeBitMap;
 	for (size_t i = 0; i < 32; i++) {
 		for (size_t j = 0; j < 16; j++) {
 			cout << bitmap.i_node_bitmap[i * 16 + j] << " ";
@@ -738,7 +741,7 @@ bool Cmd::ViewINodeMap() const {
 
 bool Cmd::ViewBlockMap() {
 	//共计1024
-	BlockBitmap bitmap = disc->blockBitMap;
+	BlockBitmap bitmap = disk->blockBitMap;
 	for (size_t i = 0; i < 32; i++) {
 		for (size_t j = 0; j < 32; j++) {
 			cout << bitmap.blocks[i * 32 + j] << " ";
@@ -767,7 +770,7 @@ void usage() {
 }
 
 
-bool DirecoryEntry::init(char fileName_[11], int flag_, int i_node_number_) {
+bool DirectoryEntry::init(char fileName_[11], int flag_, int i_node_number_) {
 	strcpy_s(this->fileName, fileName_);
 	this->flag = flag_;
 	this->i_node_number = i_node_number_;
@@ -840,7 +843,7 @@ bool I_NODE::isFull(DataBlock dataBlocks[]) {
 			if (j != -1) {
 				DataBlock datablock = dataBlocks[j];//拿到二级数据块
 				if (datablock.directoryBlock.direcoryEntry[0].flag == 1 || datablock.directoryBlock.direcoryEntry[0].flag == 0) {
-					for (DirecoryEntry temp: datablock.directoryBlock.direcoryEntry) {
+					for (DirectoryEntry temp: datablock.directoryBlock.direcoryEntry) {
 
 						if (temp.fileName[0] <= 0) {
 							return false;
@@ -866,7 +869,7 @@ bool I_NODE::addChild(int childINodeNum, DataBlock dataBlocks[], BlockBitmap& bl
 			//直接地址为空——申请数据块
 			if (blockBitMap.getABlockNum(directAddress[i])) {
 				blockBitMap.blocks[directAddress[i]] = true;
-				DirecoryEntry childDirectory;
+				DirectoryEntry childDirectory;
 				childDirectory.init(path._Myptr(), isDir, childINodeNum);
 				dataBlocks[directAddress[i]].directoryBlock.direcoryEntry[0] = childDirectory;
 				return true;
@@ -891,7 +894,7 @@ bool I_NODE::addChild(int childINodeNum, DataBlock dataBlocks[], BlockBitmap& bl
 				}
 			}
 			if (flag) {
-				DirecoryEntry childDirectory;
+				DirectoryEntry childDirectory;
 				childDirectory.init(path._Myptr(), isDir, childINodeNum);
 				dataBlocks[directAddress[i]].directoryBlock.direcoryEntry[z] = childDirectory;
 				return true;
@@ -914,7 +917,7 @@ bool I_NODE::addChild(int childINodeNum, DataBlock dataBlocks[], BlockBitmap& bl
 			{
 				dataBlocks[i].indexBlock.indexs[0] = j;//将目录文件数据块与索引块连接起来
 				blockBitMap.blocks[j] = true;
-				DirecoryEntry childDirectory;
+				DirectoryEntry childDirectory;
 				childDirectory.init(path._Myptr(), isDir, childINodeNum);
 				dataBlocks[j].directoryBlock.direcoryEntry[0] = childDirectory;
 				firstClassIndexAddress = i;//更新一级索引块位置
@@ -949,7 +952,7 @@ bool I_NODE::addChild(int childINodeNum, DataBlock dataBlocks[], BlockBitmap& bl
 					}
 
 					if (flag) {
-						DirecoryEntry childDirectory;
+						DirectoryEntry childDirectory;
 						childDirectory.init(path._Myptr(), isDir, childINodeNum);
 						dataBlocks[j].directoryBlock.direcoryEntry[x] = childDirectory;
 						return true;
@@ -963,7 +966,7 @@ bool I_NODE::addChild(int childINodeNum, DataBlock dataBlocks[], BlockBitmap& bl
 				int y;
 				if (blockBitMap.getABlockNum(y)) {
 					blockBitMap.blocks[y] = true;
-					DirecoryEntry childDirectory;
+					DirectoryEntry childDirectory;
 					childDirectory.init(path._Myptr(), isDir, childINodeNum);
 					dataBlocks[y].directoryBlock.direcoryEntry[0] = childDirectory;
 
@@ -979,7 +982,7 @@ bool I_NODE::addChild(int childINodeNum, DataBlock dataBlocks[], BlockBitmap& bl
 	return true;
 }
 
-bool I_NODE::existChild(string child, DataBlock dataBlocks[], int& inodeNum, DirecoryEntry** direcoryEntry_) {
+bool I_NODE::existChild(string child, DataBlock dataBlocks[], int& inodeNum, DirectoryEntry** direcoryEntry_) {
 
 	inodeNum = -1;
 	for (size_t j = 0; j < 2; j++) {
@@ -988,7 +991,7 @@ bool I_NODE::existChild(string child, DataBlock dataBlocks[], int& inodeNum, Dir
 
 			for (int i = 0; i < 4; i++) {
 				if (datablock.directoryBlock.direcoryEntry[i].flag > -1) {//判断是否是目录文件块
-					DirecoryEntry directEntry = datablock.directoryBlock.direcoryEntry[i];
+					DirectoryEntry directEntry = datablock.directoryBlock.direcoryEntry[i];
 					if (child._Equal(directEntry.fileName)) {
 						inodeNum = directEntry.i_node_number;
 						*direcoryEntry_ = &dataBlocks[directAddress[j]].directoryBlock.direcoryEntry[i];
@@ -1013,7 +1016,7 @@ bool I_NODE::existChild(string child, DataBlock dataBlocks[], int& inodeNum, Dir
 
 				for (int k = 0; k < 4; k++) {
 					if (dataBlocks[j].directoryBlock.direcoryEntry[k].flag > -1) {//判断是否是目录文件数据块
-						DirecoryEntry directEntry = dataBlocks[j].directoryBlock.direcoryEntry[k];
+						DirectoryEntry directEntry = dataBlocks[j].directoryBlock.direcoryEntry[k];
 						if (child._Equal(directEntry.fileName)) {
 							inodeNum = directEntry.i_node_number;
 

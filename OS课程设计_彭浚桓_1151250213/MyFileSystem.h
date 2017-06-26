@@ -11,24 +11,24 @@ using namespace std;
 //一些常量的定义
 const int BLOCK_SIZE = 64; //磁盘块的大小——64字节
 
-struct Disc;
+struct Disk;
 struct RootDirectory;
 struct I_NodeBitmap;
 struct BlockBitmap;
 struct I_NODE;
 union DataBlock;
 
-struct DirecoryEntry;
+struct DirectoryEntry;
 struct IndexBlock;
 struct TxtBlock;
 struct DirectoryFileBlock;
 
 //目录项
-struct DirecoryEntry {
+struct DirectoryEntry {
 	char fileName[11];//文件或目录名
 	unsigned char flag;//0 表示一般文件，1 表示目录
 	int i_node_number;//i-node 编号——指向文件或者目录的索引节点
-	DirecoryEntry() {
+	DirectoryEntry() {
 		fileName[0] = '\0';
 		flag = -1;
 		i_node_number = -1;
@@ -50,8 +50,9 @@ struct IndexBlock {
 //文本文件数据块
 struct TxtBlock {
 	char txt[BLOCK_SIZE];
+
 	TxtBlock() {
-		for (size_t i = 0; i < BLOCK_SIZE; i++){
+		for (size_t i = 0; i < BLOCK_SIZE; i++) {
 			txt[i] = -1;
 		}
 	}
@@ -59,7 +60,7 @@ struct TxtBlock {
 
 //目录文件数据块
 struct DirectoryFileBlock {
-	DirecoryEntry direcoryEntry[4];
+	DirectoryEntry direcoryEntry[4];
 };
 
 union DataBlock {
@@ -74,7 +75,7 @@ union DataBlock {
 
 //根目录——最多四个目录项
 struct RootDirectory {
-	DirecoryEntry direcoryEntries[4];
+	DirectoryEntry direcoryEntries[4];
 
 	bool getAnVoidDirecoryEntry(int& j);
 };
@@ -139,7 +140,7 @@ struct I_NODE {
 	//判断当前i-node能否继续添加子i-node(子目录或者子文件）
 	bool isFull(DataBlock dataBlocks[]);
 	bool addChild(int childINodeNum, DataBlock dataBlocks[], BlockBitmap& blockBitMap, string path, bool isDir);
-	bool existChild(string child, DataBlock dataBlocks[], int& inodeNum, DirecoryEntry **direcoryEntry_=new DirecoryEntry *);
+	bool existChild(string child, DataBlock dataBlocks[], int& inodeNum, DirectoryEntry** direcoryEntry_ = new DirectoryEntry *);
 	bool clear(DataBlock datablocks[], BlockBitmap& blockBitMap);
 	void show(DataBlock datablocks[]);
 	void addText(const string& cs, DataBlock datablok[], BlockBitmap& bitmap);
@@ -147,7 +148,7 @@ struct I_NODE {
 };
 
 //磁盘
-struct Disc {
+struct Disk {
 	RootDirectory rootDirectory;
 	I_NodeBitmap i_nodeBitMap;//描述512个i-node的状态
 	BlockBitmap blockBitMap;//描述1024块磁盘块的状态
@@ -184,13 +185,13 @@ public:
 class Cmd {
 public:
 
-	Cmd(Disc* disc);
+	Cmd(Disk* disk);
 	~Cmd();
 	bool parse(string cmd);
-	static Cmd* getInstance(Disc* disc);
+	static Cmd* getInstance(Disk* disk);
 	static string* split(string s, char c);
 
-	Disc* disc;
+	Disk* disk;
 
 private:
 	int cwd_inode_num;
@@ -231,8 +232,8 @@ private:
 };
 
 
-inline Cmd::Cmd(Disc* disc): cwd_inode_num(-1) {
-	this->disc = disc;
+inline Cmd::Cmd(Disk* disc): cwd_inode_num(-1) {
+	this->disk = disc;
 	head = new InodeLink(-1);
 	iNodeManager = new InodeLinkManager(head);
 }
@@ -240,7 +241,7 @@ inline Cmd::Cmd(Disc* disc): cwd_inode_num(-1) {
 inline Cmd::~Cmd() {
 }
 
-inline Cmd* Cmd::getInstance(Disc* disc) {
+inline Cmd* Cmd::getInstance(Disk* disc) {
 	if (instance == nullptr) {
 		instance = new Cmd(disc);
 
