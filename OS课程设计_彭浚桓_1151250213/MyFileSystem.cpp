@@ -47,16 +47,16 @@ bool Cmd::parse(string cmd) {
 		return false;
 	}
 	else if (strings[0]._Equal("MKfile")) {
-		Mk(strings[1], false);
+		Mk(cwd_inode_num,strings[1], false);
 	}
 	else if (strings[0]._Equal("MKdir")) {
-		Mk(strings[1], true);
+		Mk(cwd_inode_num,strings[1], true);
 	}
 	else if (strings[0]._Equal("Cd")) {
 		Cd(strings[1]);
 	}
 	else if (strings[0]._Equal("Delfile")) {
-		DelFile(strings[1]);
+		DelFile(strings[1],false);
 	}
 	else if (strings[0]._Equal("Deldir")) {
 		int level = 0;
@@ -135,13 +135,14 @@ bool Cmd::Format() {
 
 
 bool Cmd::Mk(string dir, bool isDir) {
+bool Cmd::Mk(int inode,string dir, bool isDir) {
 	if (dir._Equal("")) {
 		cout << "请输入参数" << endl;
 		return false;
 	}
 	int i_node_num;
-	if (cwd_inode_num != -1) {//非根目录
-		I_NODE* parentINode = &(disk->i_node_s[cwd_inode_num]);
+	if (inode != -1) {//非根目录
+		I_NODE* parentINode = &(disk->i_node_s[inode]);
 		if (parentINode->isFull(disk->dataBlocks)) {
 			cout << "该目录下已满，不能再添加任何" << (isDir ? "目录" : "文件") << endl;
 			return false;
@@ -173,6 +174,11 @@ bool Cmd::Mk(string dir, bool isDir) {
 		if (disk->i_nodeBitMap.getAnINodeNum(i_node_num)) {//找到空i-node
 			disk->i_nodeBitMap.i_node_bitmap[i_node_num] = true;//更改对应i-node的状态
 			disk->i_node_s[i_node_num].init();//初始化i-node——主要是对时间的更改
+
+			disk->blockBitMap.getABlockNum(disk->i_node_s[i_node_num].directAddress[0]);
+			disk->blockBitMap.blocks[disk->i_node_s[i_node_num].directAddress[0]] = true;
+
+
 			parentINode->addChild(i_node_num, disk->dataBlocks, disk->blockBitMap, dir, isDir);//完成父节点到子节点的连接,true--目录
 			return true;
 		}
@@ -198,6 +204,10 @@ bool Cmd::Mk(string dir, bool isDir) {
 		if (disk->i_nodeBitMap.getAnINodeNum(i_node_num)) {
 			disk->i_nodeBitMap.i_node_bitmap[i_node_num] = true;
 			disk->i_node_s[i_node_num].init();
+
+			disk->blockBitMap.getABlockNum(disk->i_node_s[i_node_num].directAddress[0]);
+			disk->blockBitMap.blocks[disk->i_node_s[i_node_num].directAddress[0]] = true;
+
 			disk->rootDirectory.direcoryEntries[j].init(dir._Myptr(), isDir, i_node_num);
 			return true;
 		}
@@ -273,21 +283,34 @@ bool Cmd::Cd(string path) {
 	return true;
 }
 
-bool Cmd::DelFile(string path) {
+bool Cmd::DelFile(string path,bool del) {
 	//判断是否根目录
 	if (cwd_inode_num == -1) {
 
 		for (size_t i = 0; i < 4; i++) {
 			if (path._Equal(disk->rootDirectory.direcoryEntries[i].fileName)) {
+				if (del)
+				{
+					if (disk->i_node_s[disk->rootDirectory.direcoryEntries[i].i_node_number].isReadOnly == 0)
+						disk->i_node_s[disk->rootDirectory.direcoryEntries[i].i_node_number].clear(disk->dataBlocks, disk->blockBitMap);
+					disk->i_nodeBitMap.i_node_bitmap[disk->rootDirectory.direcoryEntries[i].i_node_number] = false;
+					disk->rootDirectory.direcoryEntries[i].fileName[0] = '\0';
+					disk->rootDirectory.direcoryEntries[i].flag = -1;
+					disk->rootDirectory.direcoryEntries[i].i_node_number = -1;
+					return true;
+				}
+
 				if (disk->rootDirectory.direcoryEntries[i].flag == 0)//如果是文件
 				{
-
+					if(disk->i_node_s[disk->rootDirectory.direcoryEntries[i].i_node_number].isReadOnly==0)
 					disk->i_node_s[disk->rootDirectory.direcoryEntries[i].i_node_number].clear(disk->dataBlocks, disk->blockBitMap);
 					disk->i_nodeBitMap.i_node_bitmap[disk->rootDirectory.direcoryEntries[i].i_node_number] = false;
 					disk->rootDirectory.direcoryEntries[i].fileName[0] = '\0';
 					disk->rootDirectory.direcoryEntries[i].flag = -1;
 					disk->rootDirectory.direcoryEntries[i].i_node_number = -1;
 					return true;
+				}else {
+					cout << "文件只读，不可删除" << endl;
 				}
 			}
 		}
@@ -301,11 +324,24 @@ bool Cmd::DelFile(string path) {
 	DirectoryEntry* pdircoryEntry = nullptr;
 	if (!parent_Inode.existChild(path, disk->dataBlocks, child_Inode_num, &pdircoryEntry)) {//如果是文件则返回false
 		if (child_Inode_num != -1) {
-			disk->i_node_s[child_Inode_num].clear(disk->dataBlocks, disk->blockBitMap);//删除文本，同时将对应的数据块bitmap置为false
-			disk->i_nodeBitMap.i_node_bitmap[child_Inode_num] = false;
-			pdircoryEntry->i_node_number = -1;
-			pdircoryEntry->flag = -1;
-			pdircoryEntry->fileName[0] = '\0';
+			if(del) {
+				disk->i_node_s[child_Inode_num].clear(disk->dataBlocks, disk->blockBitMap);//删除文本，同时将对应的数据块bitmap置为false
+				disk->i_nodeBitMap.i_node_bitmap[child_Inode_num] = false;
+				pdircoryEntry->i_node_number = -1;
+				pdircoryEntry->flag = -1;
+				pdircoryEntry->fileName[0] = '\0';
+				return true;
+			}
+			if (disk->i_node_s[child_Inode_num].isReadOnly == 0 ){
+				disk->i_node_s[child_Inode_num].clear(disk->dataBlocks, disk->blockBitMap);//删除文本，同时将对应的数据块bitmap置为false
+				disk->i_nodeBitMap.i_node_bitmap[child_Inode_num] = false;
+				pdircoryEntry->i_node_number = -1;
+				pdircoryEntry->flag = -1;
+				pdircoryEntry->fileName[0] = '\0';
+				return true;
+			}else {
+				cout << "文件只读，不可删除" << endl;
+			}
 
 		}
 		else {
@@ -411,7 +447,7 @@ bool Cmd::DelDir(string path, int& level) {
 					}
 					else if (temp.directoryBlock.direcoryEntry[j].flag == 0)//文件
 					{
-						DelFile(temp.directoryBlock.direcoryEntry[j].fileName);
+						DelFile(temp.directoryBlock.direcoryEntry[j].fileName,true);
 						disk->dataBlocks[cwd_inode.directAddress[i]].directoryBlock.direcoryEntry[j].fileName[0] = '\0';
 						disk->dataBlocks[cwd_inode.directAddress[i]].directoryBlock.direcoryEntry[j].flag = -1;
 						disk->i_nodeBitMap.i_node_bitmap[disk->dataBlocks[cwd_inode.directAddress[i]].directoryBlock.direcoryEntry[j].i_node_number] = false;
@@ -447,7 +483,7 @@ bool Cmd::DelDir(string path, int& level) {
 						}
 						else if (temp.directoryBlock.direcoryEntry[j].flag == 0)//文件
 						{
-							DelFile(temp.directoryBlock.direcoryEntry[j].fileName);
+							DelFile(temp.directoryBlock.direcoryEntry[j].fileName,true);
 							disk->dataBlocks[y].directoryBlock.direcoryEntry[j].fileName[0] = '\0';
 							disk->dataBlocks[y].directoryBlock.direcoryEntry[j].flag = -1;
 							disk->i_nodeBitMap.i_node_bitmap[disk->dataBlocks[y].directoryBlock.direcoryEntry[j].i_node_number] = false;
@@ -540,33 +576,81 @@ bool Cmd::Copy(string origin_path, string goal_path) {
 		return false;
 	}
 
+	//TODO 完成地址解析，获取目标目录inode
+
+	int j = 0;
+	int temp_inode_num = -1;
+	int i = goal_path.find_first_of('\\');
+	string temp = string(goal_path,j, i);
+	j = i+1;
+	if (temp._Equal("root"))
+	{
+		temp_inode_num = -1;
+	}
+	string goal = string(goal_path, j,goal_path.length());
+	i = goal.find_first_of('\\');
+	temp = string(goal, 0, i);
+	
+
+	for (int x = 0; x <4;x++)
+	{
+		if (temp._Equal(disk->rootDirectory.direcoryEntries[x].fileName))
+		{
+			temp_inode_num = disk->rootDirectory.direcoryEntries[x].i_node_number;
+			break;
+		}
+	}
+	
+	while (true){
+
+		goal = string(goal, j, goal.length());
+		i = goal.find_first_of('\\');
+		if (i==-1)
+		{
+			break;
+		}
+		temp = string(goal, 0, i);
+		j = i + 1;
+		int temp_int;
+		if (disk->i_node_s[temp_inode_num].existChild(temp, disk->dataBlocks, temp_int)&&temp_int!=-1) {
+			temp_inode_num = temp_int;
+			continue;
+		}
+	}
+	//最后temp_inode_num就是目标文件夹inode
+
+
+
 	if (cwd_inode_num == -1) {
 		int child_goal = -1, child_origin = -1;
 		for (size_t i = 0; i < 4; i++) {
 			if (origin_path._Equal(disk->rootDirectory.direcoryEntries[i].fileName)) {
 				child_origin = disk->rootDirectory.direcoryEntries[i].i_node_number;
 			}
-			if (goal_path._Equal(disk->rootDirectory.direcoryEntries[i].fileName)) {
-				child_goal = disk->rootDirectory.direcoryEntries[i].i_node_number;
-			}
+//			if (goal_path._Equal(disk->rootDirectory.direcoryEntries[i].fileName)) {
+//				child_goal = disk->rootDirectory.direcoryEntries[i].i_node_number;
+//			}
 
 		}
 		if (child_origin == -1) {
 			cout << "源文件不存在！" << endl;
 			return false;
 		}
+
+
 		I_NODE origin = disk->i_node_s[child_origin];
 
-		if (child_goal == -1) {
-			Mk(goal_path, false);
-
-			for (size_t i = 0; i < 4; i++) {
-				if (goal_path._Equal(disk->rootDirectory.direcoryEntries[i].fileName)) {
-					child_goal = disk->rootDirectory.direcoryEntries[i].i_node_number;
-					break;
-				}
-			}
-		}
+//
+//		if (child_goal == -1) {
+//			Mk(goal_path, false);
+//
+//			for (size_t i = 0; i < 4; i++) {
+//				if (goal_path._Equal(disk->rootDirectory.direcoryEntries[i].fileName)) {
+//					child_goal = disk->rootDirectory.direcoryEntries[i].i_node_number;
+//					break;
+//				}
+//			}
+//		}
 
 		disk->i_node_s[child_goal].addText(origin.getTxt(disk->dataBlocks), disk->dataBlocks, disk->blockBitMap);
 		return true;
@@ -577,9 +661,11 @@ bool Cmd::Copy(string origin_path, string goal_path) {
 	int child_goal, child_origin;
 	if (!parent.existChild(origin_path, disk->dataBlocks, child_origin)) {
 		if (child_origin != -1) {
-			if (!parent.existChild(goal_path, disk->dataBlocks, child_goal) && child_goal == -1) {
-				Mk(goal_path, false);
-				parent.existChild(goal_path, disk->dataBlocks, child_goal);
+			//if (!parent.existChild(goal_path, disk->dataBlocks, child_goal) && child_goal == -1) {
+			if (!disk->i_node_s[temp_inode_num].existChild(origin_path, disk->dataBlocks, child_goal) && child_goal == -1) {
+				Mk(temp_inode_num,origin_path, false);
+//				parent.existChild(origin_path, disk->dataBlocks, child_goal);
+				disk->i_node_s[temp_inode_num].existChild(origin_path, disk->dataBlocks, child_goal);
 			}
 
 			I_NODE origin = disk->i_node_s[child_origin];
@@ -731,7 +817,7 @@ bool Cmd::ViewINodeMap() const {
 	I_NodeBitmap bitmap = disk->i_nodeBitMap;
 	for (size_t i = 0; i < 32; i++) {
 		for (size_t j = 0; j < 16; j++) {
-			cout << bitmap.i_node_bitmap[i * 16 + j] << " ";
+			cout << bitmap.i_node_bitmap[i * 16 + j] << "  ";
 		}
 		cout << endl;
 	}
@@ -743,7 +829,11 @@ bool Cmd::ViewBlockMap() {
 	//共计1024
 	BlockBitmap bitmap = disk->blockBitMap;
 	for (size_t i = 0; i < 32; i++) {
+		if (i == 16)
+			cout << endl;
 		for (size_t j = 0; j < 32; j++) {
+			if (j == 16)
+				cout << "\t" << endl;
 			cout << bitmap.blocks[i * 32 + j] << " ";
 		}
 		cout << endl;
@@ -756,12 +846,12 @@ bool Cmd::ViewBlockMap() {
 
 void usage() {
 	cout << "Format\t\t\t初始化磁盘，划定结构" << endl <<
-		"Mkfile [file path]\t\t创建文件" << endl <<
-		"Mkdir [dir path]\t\t创建目录" << endl <<
+		"Mkfile [file path]\t创建文件" << endl <<
+		"Mkdir [dir path]\t创建目录" << endl <<
 		"Cd [dir path]\t\t改变当前目录" << endl <<
 		"Delfile [file path]\t删除文件（注意只读属性）" << endl <<
 		"Deldir [dir path]\t删除目录（注意只读属性）" << endl <<
-		"Dir\t\t\t列文件目录 （列出名字和建立时间，注意隐藏属性）" << endl <<
+		"Dir\t\t\t列文件目录" << endl <<
 		"Copy [origin file path] [goal file path]\t\t\t复制文件到某一路经" << endl <<
 		"Open [file path]\t打开并编辑文件（注意只读属性）" << endl <<
 		"Attrib [+r|-r|+h|-h]  [file path]\t\t更改文件属性，加只读，减只读，加隐藏，减隐藏" << endl <<

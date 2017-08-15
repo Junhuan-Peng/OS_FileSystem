@@ -3,8 +3,6 @@
 #include <string>
 #include <time.h>
 
-
-struct TxtBlock;
 using namespace std;
 
 
@@ -76,7 +74,12 @@ union DataBlock {
 //根目录——最多四个目录项
 struct RootDirectory {
 	DirectoryEntry direcoryEntries[4];
-
+	
+	/**
+	 * \brief 从根目录中获取一个可用的空的目录项
+	 * \param j 整形引用，用于存放找到的目录项下标
+	 * \return 如果找到则返回true，反之false
+	 */
 	bool getAnVoidDirecoryEntry(int& j);
 };
 
@@ -84,7 +87,6 @@ struct RootDirectory {
 //i-node位图
 struct I_NodeBitmap {
 	bool i_node_bitmap[512]{false};
-	//获取一个能够使用的i-node的下标
 
 	/**
 	 * \brief 获取一个能够使用的i-node下标
@@ -139,21 +141,27 @@ struct I_NODE {
 
 	//判断当前i-node能否继续添加子i-node(子目录或者子文件）
 	bool isFull(DataBlock dataBlocks[]);
+	//为当前inode所对应的目录增添子目录或文件
 	bool addChild(int childINodeNum, DataBlock dataBlocks[], BlockBitmap& blockBitMap, string path, bool isDir);
+	//判断指定的子目录是否存在于当前inode中
 	bool existChild(string child, DataBlock dataBlocks[], int& inodeNum, DirectoryEntry** direcoryEntry_ = new DirectoryEntry *);
+	//清空作为文本文件的当前inode的数据（文本）
 	bool clear(DataBlock datablocks[], BlockBitmap& blockBitMap);
+	//显示作为文本文件的当前inode的数据（文本）
 	void show(DataBlock datablocks[]);
+	//增加作为文本文件的当前inode的数据（文本）
 	void addText(const string& cs, DataBlock datablok[], BlockBitmap& bitmap);
+	//获取作为文本文件的当前inode的数据（文本）
 	string getTxt(DataBlock datablocks[]);
 };
 
 //磁盘
 struct Disk {
-	RootDirectory rootDirectory;
+	RootDirectory rootDirectory;//根目录
 	I_NodeBitmap i_nodeBitMap;//描述512个i-node的状态
 	BlockBitmap blockBitMap;//描述1024块磁盘块的状态
-	I_NODE i_node_s[512];//512个i-node占用磁盘128块
-	DataBlock dataBlocks[1024];
+	I_NODE i_node_s[512];//512个i-node数组
+	DataBlock dataBlocks[1024];//1024个磁盘块数组
 };
 
 
@@ -219,10 +227,10 @@ private:
 
 	static Cmd* instance;
 	bool Format();//初始化磁盘，划定结构
-	bool Mk(string dir, bool isDir);//创建目录(true)或文件（false）
+	bool Mk(int inode,string dir, bool isDir);//创建目录(true)或文件（false）
 	bool Cd(string dir);//改变当前目录
-	bool DelFile(string filepath);//删除文件（注意只读属性）
-	bool DelDir(string path, int& level);
+	bool DelFile(string filepath,bool del);//删除文件（注意只读属性）
+	bool DelDir(string path, int& level);//删除目录
 	bool Dir();//列文件目录
 	bool Copy(string orign_path, string goal_path);//复制文件到某一路径
 	bool Open(string filepath);//打开并编辑文件
